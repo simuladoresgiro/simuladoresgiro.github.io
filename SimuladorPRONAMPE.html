@@ -232,7 +232,7 @@ tbody tr:hover { background:#eef3fb; }
     </div>
 
     <div id="taxasCdiContainer" class="field">
-         <label for="cdi">TMS (%)</label>
+         <label for="cdi">TMS Atual (%)</label>
          <input id="cdi" type="number" step="0.0001" value="13.90">
     </div>
 
@@ -350,7 +350,9 @@ const IOF_ADICIONAL = 0.0038;
 
 let feriados = [];
 let tabelaSeguro = [];
+let tmsDados = null;
 let dadosCompartilhadosCarregados = false;
+let tmsDadosCarregados = false;
 
 fetch("shared-data.json").then(response => {
     if(!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -360,6 +362,16 @@ fetch("shared-data.json").then(response => {
     tabelaSeguro = data.tabelaSeguro;
     dadosCompartilhadosCarregados = true;
 }).catch(error => console.error("Não foi possível carregar shared-data.json:", error));
+
+fetch("./TMS.json").then(response => {
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+}).then(data => {
+    tmsDados = data;
+    const faixaVigente = data.taxasReferencia.find(item => item.dataFinal === null) || data.taxasReferencia[data.taxasReferencia.length - 1];
+    if(faixaVigente) cdi.value = faixaVigente.taxaAnual;
+    tmsDadosCarregados = true;
+}).catch(error => console.error("Não foi possível carregar TMS.json:", error));
 
 function parseDateLocal(value){
     // Parse YYYY-MM-DD string to Date object in local time (no UTC offset)
@@ -468,7 +480,7 @@ function atualizarImpactoLimite(valorContratado){
 }
 
 function calcular(){
-    if(!dadosCompartilhadosCarregados){
+    if(!dadosCompartilhadosCarregados || !tmsDadosCarregados){
         alert("Aguarde o carregamento dos dados compartilhados.");
         return;
     }
