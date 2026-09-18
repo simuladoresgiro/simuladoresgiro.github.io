@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Simulador Giros - F3421879</title>
+
+<style>
+.page-container { max-width:1080px; margin:0 auto; padding:24px 20px 40px; }
+h1 { color:#003366; text-align:center; margin-bottom:24px; font-size:2rem; letter-spacing:0.02em; }
+@media print { h1 { font-size:1.5rem; } }
+
+/* Card: Dados da Empresa e da Operação */
+.table-card, .dados-card { background:#fff; border-radius:12px; padding:18px; border:1px solid #e6eef6; box-shadow:0 8px 20px rgba(15,41,77,0.04); margin-bottom:18px; }
+.card-title { font-size:1rem; color:#1f3b5a; margin:0 0 12px 0; display:flex; align-items:center; gap:10px; }
+.dados-card .card-title::before{ content:""; width:28px; height:28px; background:#eef6fb; display:inline-block; border-radius:6px; box-shadow:inset 0 0 0 1px #d8eaf6; }
+.dados-card .form-grid { gap:16px 20px; }
+.dados-card .field{ display:flex; flex-direction:column; align-items:flex-start; }
+.dados-card label{ display:block; width:auto; text-align:left; margin-bottom:6px; color:#4b607e; font-weight:600; }
+.dados-card input, .dados-card select{ padding:10px 12px 10px 40px; border-radius:8px; border:1px solid #d7e2ee; background:#fff; height:44px; box-shadow:none; max-width:100%; }
+.dados-card .field.full-width{ grid-column:1 / -1; display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; }
+.dados-card .field-inline{ display:flex; gap:12px; align-items:center; }
+.dados-card input{ background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='%23d0e6f6'/></svg>"); background-repeat:no-repeat; background-position:12px center; }
+.dados-card select{ background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%23999' d='M7 10l5 5 5-5z'/></svg>"); background-repeat:no-repeat; background-position:12px center; background-size:12px; }
+
+/* keep previous body/font for compatibility */
+body { font-family: Arial, sans-serif; margin:0; background:#f4f7fb; color:#23304f; }
+/* end card styles */
+
+label { display:inline-block; width:120px; font-weight:600; color:#354156; text-align:right; }
+input, select { margin:4px 0; padding:10px 12px; border:1px solid #ccd4de; border-radius:10px; width:100%; max-width:120px; box-sizing:border-box; background:#fff; color:#1b2c42; }
+
+.form-grid {
+    max-width:1080px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    gap:18px 24px;
+    align-items:center;
+    justify-items:start;
+}
+
+.field {
+    display:grid;
+    grid-template-columns: 120px minmax(110px, 120px);
+    align-items:center;
+    gap:10px;
+}
+
+.field label { width:auto; }
+input[type="checkbox"] { width:18px; height:18px; padding:0; margin:auto; justify-self:center; }
+input, select { max-width:none; }
+
+@media (max-width: 760px) {
+    .form-grid { grid-template-columns: repeat(3, minmax(100px, 1fr)); gap:12px 12px; }
+    .field { grid-template-columns: minmax(80px, 1fr) 1fr; }
+    label { width:auto; }
+}
+
+#tipoField { grid-column: 1; grid-row: 3; }
+#taxasCdiContainer { grid-column: 2; grid-row: 3; }
+#taxaPrefixadoContainer { grid-column: 2; grid-row: 3; }
+#sobretaxaContainer { grid-column: 3; grid-row: 3; }
+#seguroContainer { grid-column: 1; grid-row: 4; }
+#sociosContainer { grid-column: 2; grid-row: 4; }
+#descontoEcgContainer { grid-column: 1; grid-row: 5; }
+#iofDiarioContainer { grid-column: 2; grid-row: 5; }
+#iofAdicionalContainer { grid-column: 3; grid-row: 5; }
+#tipoTacContainer { grid-column: 1; grid-row: 6; }
+#tacManualContainer { grid-column: 2; grid-row: 6; }
+
+.dados-e-tabelas { display:grid; grid-template-columns: 1.6fr 1fr; gap:24px; align-items:start; }
+.tabelas-laterais { display:grid; gap:18px; }
+.table-card { background:#fff; border-radius:12px; padding:18px; border:1px solid #e6eef6; box-shadow:0 8px 20px rgba(15,41,77,0.04); }
+.mini-table { width:100%; border-collapse:collapse; margin-top:10px; }
+.mini-table th, .mini-table td { border:1px solid #d7dbe1; padding:10px; font-size:0.92rem; text-align:center; white-space:nowrap; }
+.mini-table th { background:#003366; color:#fff; font-weight:700; }
+.mini-table td:first-child { width:60%; }
+
+.field.full-width {
+    grid-column: 1 / -1;
+    display:grid;
+    grid-template-columns: repeat(2, minmax(160px, 180px));
+    gap:18px 24px;
+    justify-content:start;
+}
+
+.subfield {
+    display:grid;
+    /* aumentar a largura da coluna do label para evitar overlay em textos longos */
+    grid-template-columns: 140px minmax(120px, 220px);
+    align-items:center;
+    gap:10px;
+}
+
+.field-inline {
+    display:grid;
+    grid-template-columns: 120px 1fr;
+    align-items:center;
+    gap:8px;
+}
+
+.button-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    justify-content:center;
+    margin:20px auto 0;
+    max-width:960px;
+}
+
+button {
+    padding:12px 18px;
+    background:#003366;
+    color:white;
+    border:none;
+    border-radius:10px;
+    min-width:140px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.08);
+    transition:transform .2s ease, background .2s ease;
+}
+
+button:hover {
+    transform:translateY(-1px);
+    background:#002952;
+}
+
+.filter-card { max-width:1080px; margin:20px auto 0; background:#fff; border:1px solid #dce3eb; border-radius:12px; padding:0; box-shadow:0 10px 24px rgba(0,0,0,0.05); }
+.filter-card summary { cursor:pointer; padding:14px 18px; color:#003366; font-weight:700; list-style:none; }
+.filter-card summary::-webkit-details-marker { display:none; }
+.filter-card summary::after { content:"+"; float:right; font-size:1.1rem; }
+.filter-card[open] summary::after { content:"-"; }
+.filter-options { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px 14px; padding:0 18px 16px; }
+.filter-option { display:flex; align-items:center; gap:8px; color:#354156; font-size:0.9rem; width:auto; text-align:left; white-space:nowrap; }
+.filter-option input { width:16px; height:16px; margin:0; flex:0 0 auto; }
+.filter-actions { display:flex; gap:8px; padding:0 18px 16px; justify-content:space-between; align-items:center; }
+.filter-actions .filter-aviso { font-size:0.7rem; color:#5b6f89; margin-left:auto; white-space:nowrap; }
+button.filter-action { min-width:auto; padding:8px 12px; border-radius:8px; font-size:0.85rem; box-shadow:none; }
+@media (max-width: 760px) { .filter-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+#resumo { margin:24px auto 0; max-width:1080px; background:#fff; border:1px solid #dce3eb; border-radius:16px; padding:22px; box-shadow:0 14px 34px rgba(0,0,0,0.06); font-size:14px; }
+#resumo h3 { margin-top:0; margin-bottom:20px; color:#003366; font-size:1.2rem; }
+.resumo-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; }
+.resumo-grid.resumo-grid-linhas { grid-template-columns:1fr; }
+.resumo-row { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:14px; }
+.resumo-item { background:#f7faff; padding:12px 14px; border-radius:14px; border:1px solid #e3ecf6; display:flex; justify-content:space-between; align-items:center; gap:12px; min-width:0; }
+.resumo-item span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.resumo-item span:first-child { color:#4b607e; font-size:0.88rem; line-height:1.4; }
+.resumo-item span:last-child { color:#102640; font-weight:700; text-align:right; font-size:0.95rem; }
+
+.print-header, .print-footer { display:none; }
+
+
+table { border-collapse:collapse; width:100%; margin-top:20px; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 14px 34px rgba(0,0,0,0.04); font-size:13px; }
+
+th, td { border:1px solid #d7dbe1; padding:10px; text-align:center; }
+
+th { background:#003366; color:white; }
+
+tbody tr:nth-child(odd) { background:#fafbff; }
+
+tbody tr:hover { background:#eef3fb; }
+
+#rodapeSimulacao { max-width:1080px; margin:20px auto 0; padding:18px 20px; background:#fff; border:1px solid #dce3eb; border-radius:16px; color:#354156; line-height:1.5; box-shadow:0 14px 34px rgba(0,0,0,0.04); font-size:13px; }
+#rodapeSimulacao h3 { margin-top:0; color:#003366; }
+
+@media print {
+    @page { size: A4 portrait; margin: 14mm 14mm 14mm 14mm; @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size:7pt; color:#102640; font-family:Arial, sans-serif; } }
+    body { margin:0; background:#fff !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+    /* hide only the operation data card, lateral tables and controls */
+    .dados-card, .tabelas-laterais, .table-card, .filter-card, .button-row, label, input, select, button { display:none !important; }
+
+    /* keep the page container visible without forcing all children to block */
+    .page-container { width:auto !important; max-width:100% !important; padding:0 !important; background:transparent !important; box-shadow:none !important; margin:0 auto !important; padding-top:12mm !important; padding-bottom:8mm !important; }
+    .print-header { display:flex !important; justify-content:space-between !important; align-items:center !important; position:fixed !important; top:0 !important; left:0 !important; right:0 !important; width:100% !important; box-sizing:border-box !important; padding:1mm 14mm 0.5mm !important; font-size:7pt !important; color:#102640 !important; background:#fff !important; border-bottom:1px solid #dce3eb !important; z-index:9999 !important; line-height:1.2 !important; }
+    .print-header-left, .print-header-right { display:inline-block !important; white-space:nowrap !important; }
+    .print-footer { display:flex !important; justify-content:space-between !important; align-items:center !important; position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; box-sizing:border-box !important; padding:0.5mm 14mm 1mm !important; font-size:7pt !important; color:#102640 !important; background:#fff !important; border-top:1px solid #dce3eb !important; z-index:9999 !important; font-family: Arial, sans-serif !important; line-height:1.2 !important; }
+    .print-footer span { display:none !important; }
+    h1, #resumo, table, #rodapeSimulacao, .resumo-grid, .resumo-row, .resumo-item, thead, tbody, tr, th, td { visibility:visible !important; }
+    table { display:table !important; }
+
+    /* preserve card and summary styles, but reduce sizing for A4 print */
+    .page-container { max-width:180mm !important; }
+    #resumo { margin:0 auto 10mm auto; padding:4mm 3mm; box-shadow:none !important; border:1px solid #dce3eb !important; max-width:172mm !important; font-size:8pt !important; }
+    .resumo-grid { grid-template-columns: repeat(var(--resumo-cols, 4), minmax(60px, 1fr)) !important; gap:4px !important; }
+    .resumo-grid.resumo-grid-linhas { grid-template-columns:1fr !important; }
+    .resumo-row { grid-template-columns: repeat(4, minmax(60px, 1fr)) !important; gap:4px !important; }
+    .resumo-item { padding:4px 5px !important; }
+    .resumo-item span:first-child { font-size:0.6rem !important; }
+    .resumo-item span:last-child { font-size:0.72rem !important; }
+    table { width:100% !important; max-width:172mm !important; margin:0 auto 12mm auto !important; border-collapse:collapse !important; table-layout:fixed !important; font-size:9pt !important; border-radius:0 !important; box-shadow:none !important; }
+    th, td { border:1px solid #000 !important; padding:5px !important; word-wrap:break-word; }
+    th, td { font-size:9pt !important; }
+    th { background:#003366 !important; color:#fff !important; }
+    tbody tr:nth-child(odd) { background:#fff !important; }
+    tbody tr:hover { background:transparent !important; }
+    .carencia-row td { background:#e7f1ff !important; }
+
+    /* avoid breaking rows */
+    tr { page-break-inside:avoid; page-break-after:auto; }
+    thead { display:table-header-group; }
+    tfoot { display:table-footer-group; }
+
+    #rodapeSimulacao { margin:0 auto; padding:4mm 6mm 0 6mm; box-shadow:none !important; border:1px solid #dce3eb !important; font-size:8pt; line-height:1.35; max-width:172mm !important; page-break-inside:avoid !important; break-inside:avoid !important; }
+}
+</style>
+</head>
+
+<body>
+<div class="print-header">
+    <span class="print-header-left">Data da simulação: <span id="printDate"></span></span>
+    <span class="print-header-right">Não possui caráter de proposta financeira</span>
+</div>
+<div class="print-footer"><span></span></div>
+<div class="page-container">
+
+<h1>Simulação BB Capital de Giro - PEAC FGI - Histórico</h1>
+
+<div class="dados-e-tabelas">
+<section class="dados-card">
+    <h2 class="card-title">Dados da Operação</h2>
+    <div class="form-grid">
+    <div class="field">
+        <label for="valor">Valor (R$)</label>
+        <input id="valor" type="text" inputmode="decimal" value="1.000.000,00">
+    </div>
+
+    <div class="field">
+        <label for="dataLiberacao">Data Liberação</label>
+        <input id="dataLiberacao" type="date">
+    </div>
+
+    <div class="field">
+        <label for="dataBase">Data Base</label>
+        <input id="dataBase" type="number" min="1" max="31">
+    </div>
+
+    <div class="field">
+        <label for="carencia">Carência</label>
+        <input id="carencia" type="number" value="6">
+    </div>
+
+    <div class="field">
+        <label for="prazo">Prazo Total</label>
+        <input id="prazo" type="number" value="18">
+    </div>
+
+    <div id="tipoField" class="field">
+        <label for="tipo">Tipo</label>
+        <select id="tipo">
+            <option value="cdi">CDI+ST</option>
+            <option value="prefixado">Prefixado</option>
+        </select>
+    </div>
+
+    <div id="taxasCdiContainer" class="field">
+         <label for="cdi">CDI atual (%)</label>
+         <input id="cdi" type="number" step="0.0001" value="13.90">
+    </div>
+
+     <div id="sobretaxaContainer" class="field">
+         <label for="st">Sobretaxa (%)</label>
+         <input id="st" type="number" step="0.0001" value="4.93">
+    </div>
+
+    <div id="taxaPrefixadoContainer" class="field">
+            <label for="pre">Prefixado mensal (%)</label>
+            <input id="pre" type="number" step="0.0001" value="2.3">
+    </div>
+
+    <div id="seguroContainer" class="field">
+        <label for="seguro">Seguro</label>
+        <input type="checkbox" id="seguro" checked>
+    </div>
+
+    <div id="sociosContainer" class="field">
+        <label for="socios">Sócios</label>
+        <input id="socios" type="number" min="1" value="1">
+    </div>
+
+    <div id="descontoEcgContainer" class="field">
+        <label for="descontoEcg">Desconto ECG (%)</label>
+        <input id="descontoEcg" type="number" value="40" step="0.01">
+    </div>
+
+    <div id="iofDiarioContainer" class="field">
+        <label for="iofDiario">IOF Diário (%)</label>
+        <input id="iofDiario" type="number" value="0.0082" step="0.0001" min="0">
+    </div>
+
+    <div id="iofAdicionalContainer" class="field">
+        <label for="iofAdicional">IOF Adicional (%)</label>
+        <input id="iofAdicional" type="number" value="0.38" step="0.0001" min="0">
+    </div>
+
+    <div id="tipoTacContainer" class="field">
+        <label for="tipoTac">TAC</label>
+        <select id="tipoTac">
+            <option value="automatico">Automatica</option>
+            <option value="manual">Manual</option>
+        </select>
+    </div>
+
+    <div id="tacManualContainer" class="field" style="display:none">
+        <label for="tacManual">TAC Manual (R$)</label>
+        <input id="tacManual" type="number" min="0" step="0.01" value="0.00">
+    </div>
+    </div>
+</section>
+
+<div class="tabelas-laterais">
+    <section class="table-card">
+        <h2 class="card-title">Regras FBA Ano Anterior</h2>
+        <table class="mini-table">
+            <thead>
+                <tr><th>FBA</th><th>CARÊNCIA</th><th>PARCELAS</th><th>TOTAL</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>&lt; 1M</td><td>6</td><td>6 até 30</td><td>até 36</td></tr>
+                <tr><td>1M - 5M</td><td>6</td><td>6 até 42</td><td>até 48</td></tr>
+                <tr><td>5M - 15M</td><td>6</td><td>6 até 54</td><td>até 60</td></tr>
+                <tr><td>&gt; 15M</td><td>6 - 12</td><td>6 até 54</td><td>até 60</td></tr>
+            </tbody>
+        </table>
+    </section>
+    <section class="table-card">
+        <h2 class="card-title">Impacto Limite Cliente</h2>
+        <table class="mini-table">
+            <tbody id="impactoLimiteCliente">
+                <tr><td>Fundo de Aval</td><td>-</td></tr>
+                <tr><td>Fidejussória / Real</td><td>-</td></tr>
+                <tr><td>Total</td><td>-</td></tr>
+            </tbody>
+        </table>
+    </section>
+        <table class="mini-table">
+            <tbody>
+                <tr><td>Desenvolvido por F3421879 - Guerreiro</td><td>v1.0</td></tr>
+            </tbody>
+        </table>
+</div>
+</div>
+
+<details id="filtroCamposResumo" class="filter-card">
+    <summary>Filtrar Campos</summary>
+    <div class="filter-options">
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="valor" checked>Valor</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="taxaMensal" checked>Taxa Mensal</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="liberacao" checked>Liberação</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="dataBase" checked>Data Base</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="carencia" checked>Carência</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="prazoTotal" checked>Prazo Total</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="fatorK" checked>Fator K</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="valorECG" checked>Valor ECG</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="seguroTotal" checked>Seguro Total</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="seguroParcela" checked>Seguro Parcela</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="iofTotal" checked>IOF Total</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="despesaTotal" checked>Despesa Tot.</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="cetMensal" checked>CET Mensal</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="cetAnual" checked>CET Anual</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="totalPagar" checked>Total Pagar</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="totalLiquido" checked>Total Líq.</label>
+    </div>
+    <div class="filter-actions">
+        <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(true)">Todos</button>
+        <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(false)">Limpar</button>
+        <span class="filter-aviso">Deixe selecionado apenas os campos que deseja manter <strong>visível</strong> no Resumo</span>
+    </div>
+</details>
+
+<div class="button-row">
+    <button id="btnCalcular" onclick="calcular()">Calcular</button>
+    <button id="btnPrint" onclick="window.print()">Imprimir</button>
+    <button id="btnVoltar" onclick="voltar()">Voltar</button>
+</div>
+
+<div id="resumo"></div>
+
+<table>
+<thead>
+<tr>
+<th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th id="parcelaHeader">Parcela</th><th>Saldo</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+<div id="rodapeSimulacao"></div>
+</div>
+
+<script>
+
+const IOF_DIARIO = 0.000082;
+const IOF_ADICIONAL = 0.0038;
+
+let feriados = [];
+let tabelaSeguro = [];
+let cdiDados = null;
+let dadosCompartilhadosCarregados = false;
+let cdiDadosCarregados = false;
+
+fetch("shared-data.json")
+    .then(response => {
+        if(!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        feriados = data.feriados;
+        tabelaSeguro = data.tabelaSeguro;
+        dadosCompartilhadosCarregados = true;
+    })
+    .catch(error => console.error("Não foi possível carregar shared-data.json:", error));
+
+fetch("./CDI.json")
+    .then(response => {
+        if(!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        cdiDados = data;
+        const faixaVigente = data.taxasReferencia.find(item => item.dataFinal === null) || data.taxasReferencia[data.taxasReferencia.length - 1];
+        if(faixaVigente) cdi.value = faixaVigente.taxaAnual;
+        cdiDadosCarregados = true;
+    })
+    .catch(error => console.error("Não foi possível carregar CDI.json:", error));
+
+function formatDateLocal(date){
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function parseDateInputLocal(value){
+    if(value instanceof Date){
+        return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    }
+
+    if(typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)){
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    return new Date(value);
+}
+
+function formatDateBR(value){
+    const date = parseDateInputLocal(value);
+    if(isNaN(date)) return value;
+    return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+}
+
+function parseValor(str){
+    if(!str) return NaN;
+    return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+}
+
+function formatReal(value){
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function ehUtil(data){
+    return data.getDay()!==0 && data.getDay()!==6 && !feriados.includes(formatDateLocal(data));
+}
+
+function proximoUtil(data){
+    let d = new Date(data);
+    while(!ehUtil(d)){
+        d.setDate(d.getDate()+1);
+    }
+    return d;
+}
+
+function diasUteis(d1, d2){
+    let count = 0;
+    let d = new Date(d1);
+
+    while(d < d2){
+        if(ehUtil(d)) count++;
+        d.setDate(d.getDate()+1);
+    }
+
+    return count;
+}
+
+function diasUteisNetworkdaysMenos1(d1, d2){
+    let count = 0;
+    let d = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
+    const end = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+
+    while(d <= end){
+        if(ehUtil(d)) count++;
+        d.setDate(d.getDate()+1);
+    }
+
+    return Math.max(count - 1, 0);
+}
+
+function diasCorridos(d1, d2){
+    let a = new Date(d1); a.setHours(0,0,0,0);
+    let b = new Date(d2); b.setHours(0,0,0,0);
+    return Math.max(Math.floor((b-a)/(1000*60*60*24)),0);
+}
+
+function taxaAnual(){
+    return (1 + (parseFloat(cdi.value) / 100)) * (1 + (parseFloat(st.value) / 100));
+}
+
+function jurosCDIProjetados(saldo, taxaAnual, diasUteis){
+    return saldo * ((taxaAnual ** (diasUteis / 252)) - 1);
+}
+
+function obterDataMaximaIndice(){
+    const dataBase = new Date();
+    dataBase.setHours(0, 0, 0, 0);
+    dataBase.setDate(dataBase.getDate() + 31);
+    dataBase.setDate(dataBase.getDate() + 1);
+    return proximoUtil(dataBase);
+}
+
+function obterTaxaCDI(data){
+    const dataConsulta = new Date(data);
+    dataConsulta.setDate(dataConsulta.getDate() - 1);
+    const dataConsultaFormatada = formatDateLocal(dataConsulta);
+    const faixa = cdiDados.taxasReferencia.find(item => {
+        return dataConsultaFormatada >= item.dataInicial &&
+            (!item.dataFinal || dataConsultaFormatada <= item.dataFinal);
+    });
+    return faixa ? faixa.taxaAnual : null;
+}
+
+function obterIndiceCDI(data){
+    const dataAlvo = new Date(data);
+    dataAlvo.setHours(0, 0, 0, 0);
+    const dataAlvoFormatada = formatDateLocal(dataAlvo);
+    const historico = cdiDados.historico;
+    const registroExato = historico.find(item => item.data === dataAlvoFormatada);
+    if(registroExato) return registroExato.valor;
+
+    let registroBase = null;
+    for(const registro of historico){
+        if(registro.data <= dataAlvoFormatada){
+            registroBase = registro;
+        } else {
+            break;
+        }
+    }
+
+    if(!registroBase) return null;
+
+    let cursor = parseDateInputLocal(registroBase.data);
+    let indice = registroBase.valor;
+    while(cursor < dataAlvo){
+        cursor.setDate(cursor.getDate() + 1);
+        if(!ehUtil(cursor)) continue;
+        const taxa = obterTaxaCDI(cursor);
+        if(taxa === null) return null;
+        indice = Number((indice * ((1 + taxa / 100) ** (1 / 252))).toFixed(8));
+    }
+    return indice;
+}
+
+function jurosCDI(saldo, sobretaxa, dataAnterior, dataAtual, diasUteisPeriodo){
+    const dataMaximaIndice = obterDataMaximaIndice();
+    if(dataAtual > dataMaximaIndice){
+        return jurosCDIProjetados(saldo, taxaAnual(), diasUteisPeriodo);
+    }
+
+    const indiceAnterior = obterIndiceCDI(dataAnterior);
+    const indiceAtual = obterIndiceCDI(dataAtual);
+    if(indiceAnterior === null || indiceAtual === null){
+        throw new Error("Não foi possível obter o índice CDI para uma das datas da parcela.");
+    }
+
+    return saldo * (
+        (indiceAtual / indiceAnterior) *
+        ((1 + sobretaxa / 100) ** (diasUteisPeriodo / 252)) - 1
+    );
+}
+
+function jurosPrefixado(saldo, taxaMensal, diasCorridos){
+    return saldo * taxaMensal * (diasCorridos / 30);
+}
+
+function calcularCetAnual(valorLiberado, fluxos){
+    if(valorLiberado <= 0 || fluxos.length === 0) return null;
+
+    function npv(taxa){
+        return fluxos.reduce((total, fluxo) => {
+            return total + fluxo.valor / ((1 + taxa) ** (fluxo.dias / 365));
+        }, 0) - valorLiberado;
+    }
+
+    let min = -0.9999;
+    let max = 1;
+
+    while(npv(max) > 0 && max < 100){
+        max *= 2;
+    }
+
+    for(let i=0;i<80;i++){
+        const meio = (min + max) / 2;
+        if(npv(meio) > 0){
+            min = meio;
+        } else {
+            max = meio;
+        }
+    }
+
+    return (min + max) / 2;
+}
+
+const tabelaFatorK = [
+{min:1,max:3,k:0.0142},
+{min:4,max:6,k:0.0062},
+{min:7,max:9,k:0.0042},
+{min:10,max:12,k:0.0031},
+{min:13,max:15,k:0.0027},
+{min:16,max:18,k:0.0024},
+{min:19,max:21,k:0.0022},
+{min:22,max:24,k:0.0020},
+{min:25,max:27,k:0.0018},
+{min:28,max:30,k:0.0017},
+{min:31,max:33,k:0.0016},
+{min:34,max:36,k:0.0015},
+{min:37,max:39,k:0.0014},
+{min:40,max:45,k:0.0013},
+{min:46,max:48,k:0.0012},
+{min:49,max:54,k:0.0011},
+{min:55,max:60,k:0.0010},
+{min:61,max:69,k:0.0009}
+];
+
+function obterFatorK(prazo){
+    const faixa = tabelaFatorK.find(
+        f => prazo >= f.min && prazo <= f.max
+    );
+    return faixa ? faixa.k : 0;
+}
+
+function mesesInteirosEntre(dataInicial, dataFinal){
+    let meses =
+        (dataFinal.getFullYear() - dataInicial.getFullYear()) * 12 +
+        (dataFinal.getMonth() - dataInicial.getMonth());
+
+    if(dataFinal.getDate() < dataInicial.getDate()){
+        meses -= 1;
+    }
+
+    return Math.max(meses, 0);
+}
+
+function calcular(){
+    if(!dadosCompartilhadosCarregados || !cdiDadosCarregados){
+        alert("Aguarde o carregamento dos dados compartilhados.");
+        return;
+    }
+
+    let valor = parseValor(valorInput.value);
+    let prazo = parseInt(prazoInput.value);
+    let car = parseInt(carenciaInput.value);
+    let base = parseInt(dataBaseInput.value);
+
+    if(base > 28){
+        car += 1;
+        prazo += 1;
+    }
+
+    let usarSeguro = seguroSelect.checked; // ✅ NOVO
+
+    let saldo = valor;
+    let amort = valor/(prazo-car);
+
+    let d0 = parseDateInputLocal(dataLiberacaoInput.value);
+    let anterior = new Date(d0);
+
+    let datas = [];
+
+    for(let i=1;i<=prazo;i++){
+
+        let dt;
+
+        if(base > 28){
+
+            if(i === 1){
+                // First parcel: first business day of the month after release
+                dt = new Date(d0.getFullYear(), d0.getMonth() + 1, 1);
+                dt = proximoUtil(dt);
+            } else {
+                dt = new Date(d0.getFullYear(), d0.getMonth() + i, 1);
+
+                if(tipo.value==="cdi"){
+                    dt = proximoUtil(dt);
+                }
+            }
+
+        } else {
+
+            dt = new Date(d0.getFullYear(), d0.getMonth() + i, base);
+
+            if(tipo.value==="cdi"){
+                dt = proximoUtil(dt);
+            }
+        }
+
+        if(datas.length > 0){
+            let ultima = datas[datas.length - 1];
+
+            if(dt <= ultima){
+                if(base > 28){
+                    dt = new Date(ultima.getFullYear(), ultima.getMonth() + 1, 1);
+                } else {
+                    dt = new Date(ultima.getFullYear(), ultima.getMonth() + 1, base);
+                }
+
+                if(tipo.value==="cdi"){
+                    dt = proximoUtil(dt);
+                }
+            }
+        }
+
+        datas.push(dt);
+    }
+
+    tabela.innerHTML="";
+
+    let totalJuros=0;
+    let totalPago=0;
+    let fluxosParcelas = [];
+
+    const iofDiario = parseFloat(iofDiarioInput.value || 0.0082) / 100;
+    const iofAdicional = parseFloat(iofAdicionalInput.value || 0.38) / 100;
+    let totalIOF = valor * iofAdicional;
+    let diasAcumulados = 0;
+
+    function obterTaxaSeguro(dias){
+        const faixa = tabelaSeguro.find(f => dias >= f.min && dias <= f.max);
+        return faixa ? faixa.taxa : 0;
+    }
+
+    const diasTotaisOperacao = diasCorridos(d0, datas[datas.length - 1]);
+    const taxaSeguro = obterTaxaSeguro(diasTotaisOperacao);
+
+    let totalSeguro = 0;
+
+    if(usarSeguro){
+        totalSeguro = parseInt(document.getElementById("socios").value || 1) * taxaSeguro * valor;
+    }
+
+    let parcelasSeguro = prazo - 1;
+    if(base > 28) parcelasSeguro -= 1;
+    let seguroParcela = parcelasSeguro > 0 ? totalSeguro / parcelasSeguro : 0;
+
+const descontoECG =
+    parseFloat(document.getElementById("descontoEcg").value || 40) / 100;
+
+const prazoFatorK = mesesInteirosEntre(d0, datas[datas.length - 1]);
+const fatorK = obterFatorK(prazoFatorK);
+
+const valorECG =
+    0.8 *
+    fatorK *
+    valor *
+    (1 - descontoECG) *
+    prazoFatorK;
+
+let tacAutomatico = valor * 0.03;
+
+if(tacAutomatico < 100) tacAutomatico = 100;
+if(tacAutomatico > 5000) tacAutomatico = 5000;
+
+const tacManual =
+    parseFloat(document.getElementById("tacManual").value);
+
+const tac =
+    tipoTacSelect.value === "manual"
+        ? tacManual
+        : tacAutomatico;
+
+if(tipoTacSelect.value === "manual" && isNaN(tacManual)){
+    alert("Informe a TAC Manual - Pode ser zero.");
+    return;
+}
+
+    for(let i=0;i<prazo;i++){
+
+        let data = datas[i];
+
+        let du = diasUteis(anterior,data);
+        let dc = diasCorridos(anterior,data);
+
+        let juros, diasExibidos, iofPeriodo = 0;
+
+        if(tipo.value==="cdi"){
+            juros = jurosCDI(saldo, parseFloat(st.value), anterior, data, du);
+            diasExibidos = du;
+        } else {
+            let taxa = parseFloat(pre.value) / 100;
+            juros = jurosPrefixado(saldo, taxa, dc);
+            diasExibidos = dc;
+        }
+
+        let diasConsiderados = Math.min(dc, 365 - diasAcumulados);
+
+        if(diasConsiderados > 0){
+            iofPeriodo = saldo * iofDiario * diasConsiderados;
+            iofPeriodo = Math.round(iofPeriodo * 100) / 100;
+
+            totalIOF += iofPeriodo;
+            diasAcumulados += diasConsiderados;
+        }
+
+        let capital = (i+1<=car)?0:amort;
+
+        // ✅ SEGURO POR PARCELA
+        let seguroAtual = 0;
+        if(usarSeguro && i < prazo - 2 && !(base > 28 && i === 0)){
+            seguroAtual = seguroParcela;
+        }
+
+        let parcela = juros + capital + seguroAtual;
+        fluxosParcelas.push({
+            valor: parcela,
+            dias: diasCorridos(d0, data)
+        });
+
+        saldo -= capital;
+        saldo = Math.max(saldo, 0);
+
+        totalJuros+=juros;
+        totalPago+=parcela;
+
+        tabela.innerHTML += `
+        <tr ${i+1 <= car ? 'class="carencia-row"' : ''}>
+        <td>${i+1}</td>
+        <td>${data.toLocaleDateString()}</td>
+        <td>${formatReal(capital)}</td>
+        <td>${formatReal(juros)}</td>
+        <td>${formatReal(parcela)}</td>
+        <td>${formatReal(saldo)}</td>
+        </tr>`;
+
+        anterior = data;
+    }
+
+    let seguroContratacao = usarSeguro ? seguroParcela : 0;
+
+    let despesaLiberacao =
+        totalIOF +
+        seguroContratacao +
+        valorECG +
+        tac;
+
+    let totalFinal =
+        totalPago +
+        totalIOF +
+        valorECG +
+        tac +
+        seguroContratacao;
+
+    const valorLiberado = valor - despesaLiberacao;
+    const cetAnual = calcularCetAnual(valorLiberado, fluxosParcelas);
+    const cetMensal = cetAnual === null ? null : ((1 + cetAnual) ** (1 / 12)) - 1;
+
+    const primeiroDiaMes = new Date(d0.getFullYear(), d0.getMonth(), 1);
+    const ultimoDiaMes = new Date(d0.getFullYear(), d0.getMonth() + 1, 0);
+    let duTaxa = diasUteisNetworkdaysMenos1(primeiroDiaMes, ultimoDiaMes);
+    if(duTaxa <= 0){
+        duTaxa = 1;
+    }
+
+    const taxaMensalAtual =
+        tipo.value === "cdi"
+            ? (taxaAnual() ** (duTaxa / 252)) - 1
+            : parseFloat(pre.value) / 100;
+    const linhasSeguro = usarSeguro
+        ? `
+    Seguro Total: R$ ${totalSeguro.toFixed(2)}<br>
+    Seguro Parcela: R$ ${seguroContratacao.toFixed(2)}<br>
+`
+        : "";
+    const textoCetMensal = cetMensal === null ? "N/A" : `${(cetMensal * 100).toFixed(2)}%`;
+    const textoCetAnual = cetAnual === null ? "N/A" : `${(cetAnual * 100).toFixed(2)}%`;
+    const textoTaxaMensalAtual = `${(taxaMensalAtual * 100).toFixed(2)}%`;
+    const totalLiquido = valor - despesaLiberacao;
+    const tipoDiasTaxa = tipo.value === "cdi" ? "dias úteis" : "dias corridos";
+    const periodoPrazo = diasTotaisOperacao > 420 ? "Longo Prazo" : "Curto Prazo";
+    atualizarImpactoLimite(valor, periodoPrazo);
+    const itensDespesa = ["IOF, ECG"];
+    if(usarSeguro){
+        itensDespesa.push("Prestamista");
+    }
+    if(tipoTacSelect.value === "automatico" || tac !== 0){
+        itensDespesa.push(`Tarifa de Abertura de Crédito (R$ ${tac.toFixed(2)})`);
+    }
+    const legendaParcela = usarSeguro
+        ? "    ⁴Inclui valor da parcela do prestamista."
+        : "";
+    const observacaoSelic = tipo.value === "cdi" ? " Valores sujeitos à variação da SELIC." : "";
+
+    renderizarResumo([
+        { key:"valor", label:"Valor", value:formatReal(valor) },
+        { key:"taxaMensal", label:"Taxa Mensal¹", value:textoTaxaMensalAtual },
+        { key:"liberacao", label:"Liberação", value:formatDateBR(dataLiberacaoInput.value) },
+        { key:"dataBase", label:"Data Base", value:dataBaseInput.value },
+        { key:"carencia", label:"Carência", value:car },
+        { key:"prazoTotal", label:"Prazo Total", value:prazo },
+        { key:"fatorK", label:"Fator K²", value:`${(fatorK * 100).toFixed(2)}%` },
+        { key:"valorECG", label:"Valor ECG", value:formatReal(valorECG) },
+        { key:"seguroTotal", label:"Seguro Total", value:formatReal(totalSeguro) },
+        { key:"seguroParcela", label:"Seguro Parcela", value:formatReal(seguroContratacao) },
+        { key:"iofTotal", label:"IOF Total", value:formatReal(totalIOF) },
+        { key:"despesaTotal", label:"Despesa Tot.³", value:formatReal(despesaLiberacao) },
+        { key:"cetMensal", label:"CET Mensal", value:textoCetMensal },
+        { key:"cetAnual", label:"CET Anual", value:textoCetAnual },
+        { key:"totalPagar", label:"Total Pagar", value:formatReal(totalFinal) },
+        { key:"totalLiquido", label:"Total Líq.", value:formatReal(totalLiquido) }
+    ]);
+
+    rodapeSimulacao.innerHTML = `
+    ¹Valor depende da quantidade de ${tipoDiasTaxa} entre as datas-base${tipo.value==="cdi" ? " e CDI (" + cdi.value + "% a.a. atualmente);" : ";"}<br>
+    ²Fator K para cálculo do ECG, disponibilizado pelo BNDES;<br>
+    ³Descontado na data de liberação. Inclui valores de ${itensDespesa.join(", ")};<br>
+${legendaParcela}</p>
+
+    <h3>OBSERVAÇÕES</h3>
+    <p>A presente simulação não possui caráter de proposta financeira vinculante ou de estruturação de negócio.</p>
+    <p>As condições apresentadas, em especial a taxa de juros, o prazo e o valor das despesas, poderão ser alteradas sem aviso prévio.${observacaoSelic}</p>
+    <p>Na simulação do cálculo do IOF foi considerada a alíquota padrão para operações com Pessoa Jurídica.</p>
+    <p>O Valor apresentado para seguro prestamista é uma aproximação, podendo variar a depender da data de liberação e dia base das parcelas.</p>
+    <p>As propostas de operações de crédito estão sujeitas a prévia análise e aprovação pelo Banco do Brasil.</p>
+    `;
+    // marcar resultado como válido após calcular
+    resultadosValidos = true;
+    if(btnPrint) btnPrint.disabled = false;
+}
+
+function resetarResultados(){
+    if(resultadosValidos){
+        resultadosValidos = false;
+        tabela.innerHTML = "";
+        resumo.innerHTML = `<p style='color:#b2202f;font-weight:700;'>Alguns dados foram alterados. Clique em Calcular novamente para atualizar a simulação.</p>`;
+        rodapeSimulacao.innerHTML = "";
+        if(btnPrint) btnPrint.disabled = true;
+    }
+}
+
+// ✅ INPUTS
+const valorInput = document.getElementById("valor");
+const prazoInput = document.getElementById("prazo");
+const carenciaInput = document.getElementById("carencia");
+const dataBaseInput = document.getElementById("dataBase");
+const dataLiberacaoInput = document.getElementById("dataLiberacao");
+const tipo = document.getElementById("tipo");
+const cdi = document.getElementById("cdi");
+const st = document.getElementById("st");
+const pre = document.getElementById("pre");
+const iofDiarioInput = document.getElementById("iofDiario");
+const iofAdicionalInput = document.getElementById("iofAdicional");
+const seguroSelect = document.getElementById("seguro");
+const taxasCdiContainer = document.getElementById("taxasCdiContainer");
+const sobretaxaContainer = document.getElementById("sobretaxaContainer");
+const taxaPrefixadoContainer = document.getElementById("taxaPrefixadoContainer");
+const seguroContainer = document.getElementById("seguroContainer");
+const sociosContainer = document.getElementById("sociosContainer");
+const tipoTacSelect = document.getElementById("tipoTac");
+const tacManualInput = document.getElementById("tacManual");
+const tacManualContainer = document.getElementById("tacManualContainer");
+const parcelaHeader = document.getElementById("parcelaHeader");
+const tabela = document.getElementById("tabela");
+const resumo = document.getElementById("resumo");
+const rodapeSimulacao = document.getElementById("rodapeSimulacao");
+const impactoLimiteCliente = document.getElementById("impactoLimiteCliente");
+const btnPrint = document.getElementById("btnPrint");
+
+let resultadosValidos = false;
+let resumoCamposAtuais = [];
+
+function getCamposSelecionadosResumo(){
+    return new Set(Array.from(document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]:checked')).map(input => input.dataset.resumoCampo));
+}
+
+function atualizarFiltroCamposDisponiveis(){
+    const chavesDisponiveis = new Set(resumoCamposAtuais.map(campo => campo.key));
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        const option = input.closest('.filter-option');
+        if(option){
+            option.style.display = chavesDisponiveis.has(input.dataset.resumoCampo) ? "" : "none";
+        }
+    });
+}
+
+function renderizarResumo(campos){
+    resumoCamposAtuais = campos;
+    atualizarFiltroCamposDisponiveis();
+    const selecionados = getCamposSelecionadosResumo();
+    const linhas = [];
+    for(let i = 0; i < campos.length; i += 4){
+        const camposLinha = campos.slice(i, i + 4).filter(campo => selecionados.has(campo.key));
+        if(camposLinha.length){
+            linhas.push(camposLinha);
+        }
+    }
+    resumo.innerHTML = `
+    <h3>Resumo</h3>
+    <div class="resumo-grid resumo-grid-linhas">
+        ${linhas.map(linha => `<div class="resumo-row">${linha.map(campo => `<div class="resumo-item" data-resumo-campo="${campo.key}"><span>${campo.label}</span><span>${campo.value}</span></div>`).join("")}</div>`).join("")}
+    </div>
+    `;
+}
+
+function marcarTodosCamposResumo(marcado){
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        const option = input.closest('.filter-option');
+        if((!option || option.style.display !== "none") && !input.disabled){
+            input.checked = marcado;
+        }
+    });
+    if(resultadosValidos && resumoCamposAtuais.length){
+        renderizarResumo(resumoCamposAtuais);
+    }
+}
+
+function atualizarFiltrosSeguro(){
+    const usarSeguro = seguroSelect.checked;
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        if(input.dataset.resumoCampo === "seguroTotal" || input.dataset.resumoCampo === "seguroParcela"){
+            input.disabled = !usarSeguro;
+            input.checked = usarSeguro;
+        }
+    });
+    if(resultadosValidos && resumoCamposAtuais.length){
+        renderizarResumo(resumoCamposAtuais);
+    }
+}
+
+function bindFiltroCamposResumo(){
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        input.checked = true;
+        input.addEventListener("change", () => {
+            if(resultadosValidos && resumoCamposAtuais.length){
+                renderizarResumo(resumoCamposAtuais);
+            }
+        });
+    });
+}
+
+function inicializarDatas(){
+    const hoje = new Date();
+    dataLiberacaoInput.value = formatDateLocal(hoje);
+    dataBaseInput.value = hoje.getDate();
+}
+
+function atualizarDataBase(){
+    const val = dataLiberacaoInput.value;
+    if(val){
+        const parts = val.split('-');
+        if(parts.length === 3){
+            dataBaseInput.value = parseInt(parts[2], 10);
+        }
+    }
+}
+
+function atualizarTipoTaxa(){
+    const usarPrefixado = tipo.value === "prefixado";
+    taxasCdiContainer.style.display = usarPrefixado ? "none" : "block";
+    sobretaxaContainer.style.display = usarPrefixado ? "none" : "block";
+    taxaPrefixadoContainer.style.display = usarPrefixado ? "block" : "none";
+    cdi.disabled = usarPrefixado;
+    st.disabled = usarPrefixado;
+    pre.disabled = !usarPrefixado;
+}
+
+function atualizarSocios(){
+    const usarSeguro = seguroSelect.checked;
+    // manter o espaço do bloco de Sócios mesmo quando seguro não for contratado
+    sociosContainer.style.visibility = usarSeguro ? "visible" : "hidden";
+    sociosContainer.style.pointerEvents = usarSeguro ? "auto" : "none";
+    parcelaHeader.textContent = usarSeguro ? "Parcela⁴" : "Parcela";
+    atualizarFiltrosSeguro();
+}
+
+function atualizarTacManual(){
+    const usarTacManual = tipoTacSelect.value === "manual";
+    tacManualContainer.style.display = usarTacManual ? "block" : "none";
+    tacManualInput.disabled = !usarTacManual;
+}
+
+function atualizarImpactoLimite(valorContratado, periodo){
+    const fundo = valorContratado * 0.8;
+    const fidejussoria = valorContratado * 0.2;
+    const total = valorContratado;
+    impactoLimiteCliente.innerHTML = `
+        <tr><td>Fundo de Aval ${periodo}</td><td>${formatReal(fundo)}</td></tr>
+        <tr><td>Fidejussória / Real ${periodo}</td><td>${formatReal(fidejussoria)}</td></tr>
+        <tr><td>Total ${periodo}</td><td>${formatReal(total)}</td></tr>
+    `;
+}
+
+// --- Navigation ---
+function voltar(){
+    window.location.href = './index.html';
+}
+
+// --- Input change listener to reset results ---
+function bindResultsResetListeners(){
+    const containers = document.querySelectorAll('.dados-card input, .dados-card select');
+    containers.forEach(el => {
+        el.addEventListener('input', resetarResultados);
+        el.addEventListener('change', resetarResultados);
+    });
+}
+
+
+const printDateSpan = document.getElementById("printDate");
+function atualizarCabecalhoImpressao(){
+    if(printDateSpan){
+        printDateSpan.textContent = formatDateBR(new Date());
+    }
+}
+
+inicializarDatas();
+atualizarDataBase();
+tipo.addEventListener("change", atualizarTipoTaxa);
+seguroSelect.addEventListener("change", atualizarSocios);
+tipoTacSelect.addEventListener("change", atualizarTacManual);
+dataLiberacaoInput.addEventListener("input", () => { atualizarDataBase(); resetarResultados(); });
+atualizarCabecalhoImpressao();
+bindResultsResetListeners();
+bindFiltroCamposResumo();
+window.onbeforeprint = atualizarCabecalhoImpressao;
+if(btnPrint) btnPrint.disabled = true;
+atualizarTipoTaxa();
+atualizarSocios();
+atualizarTacManual();
+
+</script>
+
+</body>
+</html>
