@@ -7,11 +7,16 @@
 <style>
   body{font-family:Arial, sans-serif;background:#f4f7fb;color:#23304f;margin:0;padding:20px}
   .container{max-width:960px;margin:32px auto;padding:28px;background:#fff;border-radius:12px;border:1px solid #e6eef6;box-shadow:0 10px 24px rgba(15,41,77,0.04)}
-  h1{margin:0 0 18px;color:#003366;text-align:center}
+  h1{margin:0;color:#003366;text-align:center}
+  .section{margin-top:30px}
+  .section-heading{margin:0 0 6px;color:#003366;font-size:1.35rem;text-align:left}
+  .section-description{margin:0 0 16px;color:#4b607e;line-height:1.5}
+  .history-notice{margin:0 0 18px;padding:14px 16px;background:#fff8e8;border:1px solid #f0d99b;border-left:4px solid #d99a18;border-radius:8px;color:#5c481d;line-height:1.5}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
   .card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;border-radius:10px;background:#f7faff;border:1px solid #e3ecf6}
   .card h2{width:100%;text-align:center;margin:0 0 12px;font-size:1.2rem;color:#003366;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
   .sim-btn{display:inline-block;padding:12px 18px;background:#003366;color:#fff;border-radius:8px;text-decoration:none;font-weight:600}
+  .sim-btn.disabled{background:#aeb7c2;color:#eef1f4;cursor:not-allowed;pointer-events:none;box-shadow:none}
   /* espaçamento entre botões do mesmo card */
   .card .sim-btn + .sim-btn{margin-top:12px}
   .note{margin-top:16px;color:#4b607e;font-size:0.95rem;text-align:center}
@@ -20,22 +25,71 @@
 <body>
   <div class="container">
     <h1>Central de Simuladores</h1>
-    <div class="grid">
+
+    <section class="section">
+      <h2 class="section-heading">Novas operações</h2>
+      <p class="section-description">Utilize estes simuladores para estimar novas operações de crédito.</p>
+      <div class="grid">
       <div class="card">
-        <h2>Simuladores BB Capital de Giro</h2>
         <h2>Linha Governo</h2>
-        <a class="sim-btn" href="./SimuladorPEAC">PEAC FGI</a>
-        <a class="sim-btn" href="./SimuladorPRONAMPE">PRONAMPE / PROCRED</a>
+        <a class="sim-btn" href="./SimuladorPEAC.html">PEAC FGI</a>
+        <a class="sim-btn" href="./SimuladorPRONAMPE.html">PRONAMPE / PROCRED</a>
       </div>
       <div class="card">
-        <h2>Simuladores BB Capital de Giro</h2>
         <h2>Linha Digital</h2>
-        <a class="sim-btn" href="./SimuladorPREFIXADO">PREFIXADO (SAC / PRICE)</a>
-        <a class="sim-btn" href="./SimuladorSAC">SAC (CDI+ST ou %CDI)</a>
+        <a class="sim-btn" href="./SimuladorPREFIXADO.html">PREFIXADO (SAC / PRICE)</a>
+        <a class="sim-btn" href="./SimuladorSAC.html">SAC (CDI+ST ou %CDI)</a>
       </div>
-    </div>
-    <p class="note">Clique em um simulador para abrir. Simulador pronto para uso: PEAC FGI, PRONAMPE / PROCRED e  PREFIXADO (SAC / PRICE) e SAC (CDI+ST ou %CDI). Simulador em desenvolvimento: Histórico, amortização e prorrogação.</p>
-    <p class="note">Ferramenta desenvolvida por F3421879 - Guerreiro visando auxiliar na simulação dos capitais de giro BB, conforme IN 590 e 1265 /
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-heading">Histórico de Operações</h2>
+      <div class="grid">
+      <div class="card">
+        <h2>Linha Governo</h2>
+        <a class="sim-btn" href="./SimuladorPEACHist.html">PEAC FGI</a>
+        <a class="sim-btn" href="./SimuladorPRONAMPEHist.html">PRONAMPE / PROCRED</a>
+      </div>
+      <div class="card">
+        <h2>Linha Digital</h2>
+        <a class="sim-btn" href="./SimuladorSACHist.html">SAC (CDI+ST ou %CDI)</a>
+      </div>
+      </div>
+            <p class="history-notice"><strong>Importante:</strong> estes simuladores servem para conferir os valores de propostas já contratadas, desde que estejam adimplentes e não tenham passado por prorrogações ou amortizações extraordinárias. Assim, é possível estimar as parcelas futuras da operação, mesmo com variações de taxa no tempo.</p>
+    </section>
+
+    <section class="section">
+      <h2 class="section-heading">Amortizações</h2>
+      <p class="section-description">Utilize estes simuladores para estimar amortizações de operações de crédito.</p>
+      <div class="grid">
+      <div class="card">
+        <h2>Linha Governo</h2>
+        <span class="sim-btn disabled" aria-disabled="true">PEAC FGI · Em desenvolvimento</span>
+        <span class="sim-btn disabled" aria-disabled="true">PRONAMPE / PROCRED · Em desenvolvimento</span>
+      </div>
+      <div class="card">
+        <h2>Linha Digital</h2>
+        <span class="sim-btn disabled" aria-disabled="true">PREFIXADO (SAC / PRICE) · Em desenvolvimento</span>
+        <span class="sim-btn disabled" aria-disabled="true">SAC (CDI+ST ou %CDI) · Em desenvolvimento</span>
+      </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-heading">Prorrogações</h2>
+      <p class="section-description">Utilize estes simuladores para estimar prorrogações de operações de crédito.</p>
+      <div class="grid">
+      <div class="card">
+        <h2>Linha Governo</h2>
+        <span class="sim-btn disabled" aria-disabled="true">PEAC FGI · Em desenvolvimento</span>
+        <span class="sim-btn disabled" aria-disabled="true">PRONAMPE / PROCRED · Em desenvolvimento</span>
+      </div>
+      </div>
+    </section>
+
+    <p class="note">Selecione uma opção acima para abrir o simulador correspondente.</p>
+    <p class="note">Ferramenta desenvolvida por F3421879 - Guerreiro para auxiliar na simulação dos capitais de giro BB, conforme IN 590 /
         Cabe ao funcionário alterar dados de entrada da operação, conforme necessário / 
         Sujeito a erros caso as regras do produto sejam alteradas /
         Não me responsabilizo pela indevida distribuição ou utilização destas ferramentas.</p>
