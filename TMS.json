@@ -12716,8 +12716,13 @@
     },
     {
       "dataInicial": "2026-08-06",
+      "dataFinal": "2026-09-16",
+      "taxaAnual": 13.9
+    },
+    {
+      "dataInicial": "2026-09-17",
       "dataFinal": null,
-      "taxaAnual": 13.9,
+      "taxaAnual": 13.65,
       "dataFinalFormula": "=WORKDAY(TODAY()+31,1,Feriados!$B:$B)"
     }
   ]
