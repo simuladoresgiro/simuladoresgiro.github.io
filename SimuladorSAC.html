@@ -78,7 +78,6 @@ input, select { max-width:none; }
 .mini-table th { background:#003366; color:#fff; font-weight:700; }
 .mini-table td:first-child { width:60%; }
 .obs-note { margin-top:10px; font-size:0.82rem; color:#5b6f89; line-height:1.4; }
-.data-note { margin-top:10px; font-size:0.82rem; color:#5b6f89; line-height:1.4; }
 
 .field.full-width { grid-column: 1 / -1; display:grid; grid-template-columns: repeat(2, minmax(160px, 180px)); gap:18px 24px; justify-content:start; }
 .subfield { display:grid; grid-template-columns: 140px minmax(120px, 220px); align-items:center; gap:10px; }
@@ -185,7 +184,7 @@ tbody tr:hover { background:#eef3fb; }
 <div class="print-footer"><span></span></div>
 <div class="page-container">
 
-<h1>Simulação BB Capital de Giro - SAC - Histórico</h1>
+<h1>Simulação BB Capital de Giro - SAC</h1>
 
 <div class="dados-e-tabelas">
 <section class="dados-card">
@@ -198,7 +197,7 @@ tbody tr:hover { background:#eef3fb; }
     </div>
 
     <div class="field">
-        <label for="dataLiberacao">Data Liberação*</label>
+        <label for="dataLiberacao">Data Liberação</label>
         <input id="dataLiberacao" type="date">
     </div>
 
@@ -304,7 +303,6 @@ tbody tr:hover { background:#eef3fb; }
 
     </div>
     <div class="obs-note">Valor da Flat: R$ 100,00 ou 0,01% - 5,00%</div>
-    <div class="data-note">*A data de liberação é a mesma da cobrança do IOF no extrato da operação</div>
 </section>
 
 <div class="tabelas-laterais">
@@ -567,83 +565,8 @@ function diasUteisNetworkdaysMenos1(d1, d2){
     return Math.max(count - 1, 0);
 }
 
-function jurosCDIProjetados(tipo, saldo, diasUteis, cdiValor, sobretaxaValor, percentualCdiValor){
-    if(tipo === "cdiSt"){
-        const taxaAnual = (1 + cdiValor) * (1 + sobretaxaValor);
-        return saldo * (Math.pow(taxaAnual, diasUteis / 252) - 1);
-    }
-
-    const cdiDiario = Math.pow(1 + cdiValor, 1 / 252) - 1;
-    return saldo * (Math.pow(1 + (cdiDiario * percentualCdiValor), diasUteis) - 1);
-}
-
-function obterDataMaximaIndice(){
-    const dataBase = new Date();
-    dataBase.setHours(0, 0, 0, 0);
-    dataBase.setDate(dataBase.getDate() + 31);
-    dataBase.setDate(dataBase.getDate() + 1);
-    return proximoUtil(dataBase);
-}
-
-function obterTaxaCDI(data){
-    const dataConsulta = cloneDate(data);
-    dataConsulta.setDate(dataConsulta.getDate() - 1);
-    const dataConsultaFormatada = formatDateLocal(dataConsulta);
-    const faixa = cdiDados.taxasReferencia.find(item => {
-        return dataConsultaFormatada >= item.dataInicial &&
-            (!item.dataFinal || dataConsultaFormatada <= item.dataFinal);
-    });
-    return faixa ? faixa.taxaAnual : null;
-}
-
-function obterIndiceCDI(data){
-    const dataAlvo = cloneDate(data);
-    const dataAlvoFormatada = formatDateLocal(dataAlvo);
-    const historico = cdiDados.historico;
-    const registroExato = historico.find(item => item.data === dataAlvoFormatada);
-    if(registroExato) return registroExato.valor;
-
-    let registroBase = null;
-    for(const registro of historico){
-        if(registro.data <= dataAlvoFormatada){
-            registroBase = registro;
-        } else {
-            break;
-        }
-    }
-
-    if(!registroBase) return null;
-
-    let cursor = parseDateLocal(registroBase.data);
-    let indice = registroBase.valor;
-    while(cursor < dataAlvo){
-        cursor.setDate(cursor.getDate() + 1);
-        if(!ehUtil(cursor)) continue;
-        const taxa = obterTaxaCDI(cursor);
-        if(taxa === null) return null;
-        indice = Number((indice * ((1 + taxa / 100) ** (1 / 252))).toFixed(8));
-    }
-    return indice;
-}
-
-function calcularFatorCDI(tipo, dataAnterior, dataAtual, diasUteis, cdiValor, sobretaxaValor, percentualCdiValor){
-    if(dataAtual > obterDataMaximaIndice()){
-        return jurosCDIProjetados(tipo, 1, diasUteis, cdiValor, sobretaxaValor, percentualCdiValor);
-    }
-
-    const indiceAnterior = obterIndiceCDI(dataAnterior);
-    const indiceAtual = obterIndiceCDI(dataAtual);
-    if(indiceAnterior === null || indiceAtual === null){
-        throw new Error("Não foi possível obter o índice CDI para uma das datas da parcela.");
-    }
-
-    const fatorCDI = indiceAtual / indiceAnterior;
-    if(tipo === "cdiSt"){
-        return fatorCDI * Math.pow(1 + sobretaxaValor, diasUteis / 252) - 1;
-    }
-
-    const taxaCdiDiaria = Math.pow(fatorCDI, 1 / diasUteis) - 1;
-    return Math.pow(1 + (taxaCdiDiaria * percentualCdiValor), diasUteis) - 1;
+function jurosCDI(saldo, taxaDiaria, diasUteis){
+    return saldo * (Math.pow(taxaDiaria, diasUteis) - 1);
 }
 
 function atualizarImpactoLimite(valorContratado, diasTotais){
@@ -752,7 +675,7 @@ function calcular(){
     let totalIOF = iofAdicionalTotal;
     let totalIofFinanciado = 0;
     let diasAcumuladosIOF = 0;
-    let iofFinanciadoPorParcela = [];
+    let iofFinanciadoShare = 0;
     const isCdiSt = tipo === "cdiSt";
 
     // Gerar datas das parcelas
@@ -807,12 +730,7 @@ function calcular(){
         if(iofAdicionalTotal < 0) iofAdicionalTotal = 0;
         totalIOF = iofAdicionalTotal;
 
-        // O limite de 365 dias restringe somente o IOF diario calculado.
-        // O IOF financiado total continua sendo rateado por todas as amortizacoes.
-        const valorIofPorAmortizacao = totalIofFinanciado / amortFinanceiro;
-        iofFinanciadoPorParcela = datas.map((data, indice) =>
-            indice + 1 > car ? valorIofPorAmortizacao : 0
-        );
+        iofFinanciadoShare = (totalIofDiario + iofAdicionalTotal) / amortFinanceiro;
         saldoDevedor = valor + totalIofFinanciado;
     }
 
@@ -824,25 +742,13 @@ function calcular(){
         let du = diasUteis(anterior, data);
         let dc = diasCorridos(anterior, data);
 
-        const fatorJuros = calcularFatorCDI(
-            tipo,
-            anterior,
-            data,
-            du,
-            cdiValor,
-            sobretaxaValor,
-            percentualCdiValor
-        );
-        const jurosPeriodo = saldoDevedor * fatorJuros;
-        const iofParcelaAtual = iofFinanciado ? iofFinanciadoPorParcela[i] || 0 : 0;
-        const usaCdiHistorico = data <= obterDataMaximaIndice();
-        const iofParcelaAdicional = iofFinanciado && usaCdiHistorico && i + 1 > car + 1
-            ? iofParcelaAtual
-            : 0;
-        const jurosComIof = jurosPeriodo + iofParcelaAtual + iofParcelaAdicional;
+        let jurosPeriodo = jurosCDI(saldoDevedor, taxaDiaria, du);
+        if(iofFinanciado && i+1 > car){
+            jurosPeriodo += iofFinanciadoShare;
+        }
 
         let capitalParcela = (i+1 <= car) ? 0 : valor / amortFinanceiro;
-        let parcelaTotal = jurosComIof + capitalParcela;
+        let parcelaTotal = jurosPeriodo + capitalParcela;
 
         let iofPeriodo = 0;
         if(!iofFinanciado){
@@ -860,7 +766,7 @@ function calcular(){
         parcelaTotal += seguroAtual;
 
         if(iofFinanciado && i+1 > car){
-            saldoDevedor -= capitalParcela + iofParcelaAtual;
+            saldoDevedor -= capitalParcela + iofFinanciadoShare;
         } else {
             saldoDevedor -= capitalParcela;
         }
@@ -872,7 +778,7 @@ function calcular(){
             dias: diasCorridosParcela
         });
 
-        totalJuros += jurosComIof;
+        totalJuros += jurosPeriodo;
         totalPago += parcelaTotal;
 
         tabela.innerHTML += `
@@ -880,7 +786,7 @@ function calcular(){
         <td>${i+1}</td>
         <td>${data.toLocaleDateString()}</td>
         <td>${formatReal(capitalParcela)}</td>
-        <td>${formatReal(jurosComIof)}</td>
+        <td>${formatReal(jurosPeriodo)}</td>
         <td>${formatReal(parcelaTotal)}</td>
         <td>${formatReal(saldoDevedor)}</td>
         </tr>`;
