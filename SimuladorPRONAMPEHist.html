@@ -23,6 +23,7 @@ h1 { color:#003366; text-align:center; margin-bottom:24px; font-size:2rem; lette
 .dados-card select{ background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%23999' d='M7 10l5 5 5-5z'/></svg>"); background-repeat:no-repeat; background-position:12px center; background-size:12px; }
 
 body { font-family: Arial, sans-serif; margin:0; background:#f4f7fb; color:#23304f; }
+.data-note { margin-top:10px; font-size:0.82rem; color:#5b6f89; line-height:1.4; }
 
 label { display:inline-block; width:120px; font-weight:600; color:#354156; text-align:right; }
 input, select { margin:4px 0; padding:10px 12px; border:1px solid #ccd4de; border-radius:10px; width:100%; max-width:120px; box-sizing:border-box; background:#fff; color:#1b2c42; }
@@ -206,7 +207,7 @@ tbody tr:hover { background:#eef3fb; }
     </div>
 
     <div class="field">
-        <label for="dataLiberacao">Data Liberação</label>
+        <label for="dataLiberacao">Data Liberação*</label>
         <input id="dataLiberacao" type="date">
     </div>
 
@@ -264,6 +265,7 @@ tbody tr:hover { background:#eef3fb; }
     </div>
 
     </div>
+    <div class="data-note">*A data de liberação é a mesma da cobrança do IOF no extrato da operação</div>
 </section>
 
 <div class="tabelas-laterais">
