@@ -24,6 +24,7 @@ h1 { color:#003366; text-align:center; margin-bottom:24px; font-size:2rem; lette
 
 /* keep previous body/font for compatibility */
 body { font-family: Arial, sans-serif; margin:0; background:#f4f7fb; color:#23304f; }
+.data-note { margin-top:10px; font-size:0.82rem; color:#5b6f89; line-height:1.4; }
 /* end card styles */
 
 label { display:inline-block; width:120px; font-weight:600; color:#354156; text-align:right; }
@@ -226,7 +227,7 @@ tbody tr:hover { background:#eef3fb; }
     </div>
 
     <div class="field">
-        <label for="dataLiberacao">Data Liberação</label>
+        <label for="dataLiberacao">Data Liberação*</label>
         <input id="dataLiberacao" type="date">
     </div>
 
@@ -306,6 +307,7 @@ tbody tr:hover { background:#eef3fb; }
         <input id="tacManual" type="number" min="0" step="0.01" value="0.00">
     </div>
     </div>
+    <div class="data-note">*A data de liberação é a mesma da cobrança do IOF no extrato da operação</div>
 </section>
 
 <div class="tabelas-laterais">
