@@ -683,7 +683,10 @@ function calcular(){
 const descontoECG =
     parseFloat(document.getElementById("descontoEcg").value || 40) / 100;
 
-const prazoFatorK = mesesInteirosEntre(d0, datas[datas.length - 1]);
+prazoFatorK = prazo;   
+    if(base > 28){
+        prazoFatorK -= 1;
+    }
 const fatorK = obterFatorK(prazoFatorK);
 
 const valorECG =
