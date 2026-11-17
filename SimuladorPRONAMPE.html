@@ -505,6 +505,12 @@ function calcular(){
     }
 
     const semJurosCarencia = fba > 360000;
+    // Data base > 28: acrescenta 1 mês de carência e 1 parcela ao prazo (regra do PEAC)
+    if(base > 28){
+        car += 1;
+        prazo += 1;
+    }
+
     let amort = prazo > car ? valor / (prazo - car) : 0;
 
     // Atualizar tabela de impacto
@@ -516,13 +522,12 @@ function calcular(){
 
     for(let i=1;i<=prazo;i++){
         let dt;
-        if(base >= 29){
-            dt = new Date(d0.getFullYear(), d0.getMonth() + i, 1);
+        if(base > 28){
             if(i === 1){
-                let diff = diasCorridos(d0, dt);
-                if(diff < 30){
-                    dt = new Date(dt.getFullYear(), dt.getMonth() + 1, 1);
-                }
+                // Primeira parcela: primeiro dia útil do mês seguinte à liberação
+                dt = new Date(d0.getFullYear(), d0.getMonth() + 1, 1);
+            } else {
+                dt = new Date(d0.getFullYear(), d0.getMonth() + i, 1);
             }
             dt = proximoUtil(dt);
         } else {
@@ -533,7 +538,7 @@ function calcular(){
         if(datas.length > 0){
             let ultima = datas[datas.length - 1];
             if(dt <= ultima){
-                if(base >= 29){
+                if(base > 28){
                     dt = new Date(ultima.getFullYear(), ultima.getMonth() + 1, 1);
                 } else {
                     dt = new Date(ultima.getFullYear(), ultima.getMonth() + 1, base);
@@ -562,6 +567,7 @@ function calcular(){
         totalSeguroValor = numSocios * taxaSeguroOp * valor;
     }
     let numParcelasSeguro = prazo - 1;
+    if(base > 28) numParcelasSeguro -= 1;
     let seguroParcela = numParcelasSeguro > 0 ? totalSeguroValor / numParcelasSeguro : 0;
 
     let saldoDevedor = valor;
@@ -587,7 +593,7 @@ function calcular(){
         }
 
         let capitalParcela = (i+1 <= car) ? 0 : amort;
-        let seguroAtual = (usarSeguro && i < prazo - 2) ? seguroParcela : 0;
+        let seguroAtual = (usarSeguro && i < prazo - 2 && !(base > 28 && i === 0)) ? seguroParcela : 0;
         let parcelaTotal = jurosPeriodo + capitalParcela + seguroAtual;
 
         if(semJurosCarencia && i + 1 <= car){
