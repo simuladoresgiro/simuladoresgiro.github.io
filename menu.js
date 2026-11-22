@@ -39,7 +39,7 @@ const MENU_SIMULADORES = [
     ]}
 ];
 
-const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v1.0";
+const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v2.0";
 
 (function(){
     const CSS = `
