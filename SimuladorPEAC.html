@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PEAC FGI · Simuladores Capital de Giro</title>
-
+<title>PEAC FGI · Histórico</title>
 <style>
 /* ================= Tokens ================= */
 :root {
@@ -63,8 +62,8 @@ body {
 /* Despesas e garantias: Seguro/Sócios | Desconto ECG/IOF diário/IOF adicional | TAC/TAC manual */
 #descontoEcgContainer, #tipoTacContainer { grid-column:1; }
 
-.field { display:flex; flex-direction:column; gap:6px; min-width:0; }
-.field > label { font-size:0.82rem; font-weight:600; color:#3c4f69; }
+.field { display:flex; flex-direction:column; gap:0; min-width:0; }
+.field > label { display:block; margin-bottom:6px; font-size:0.82rem; font-weight:600; color:#3c4f69; }
 
 .entrada { position:relative; display:flex; align-items:center; }
 .entrada input, .entrada select, .field > select {
@@ -223,7 +222,6 @@ button.filter-action:hover { background:var(--azul-50); }
     .conteudo { margin:0 !important; }
     .topo { position:static !important; background:none !important; border:none !important; padding:12mm 0 4mm !important; justify-content:center; backdrop-filter:none; }
     .topo h1 { font-size:1.4rem; text-align:center; }
-    .topo h1::before { content:"Simulação BB Capital de Giro - "; }
     .page-container { max-width:180mm !important; padding:0 0 8mm !important; }
     .print-header { display:flex !important; justify-content:space-between; position:fixed; top:0; left:0; right:0; padding:1mm 14mm 0.5mm; font-size:7pt; color:#102640; background:#fff; border-bottom:1px solid #dce3eb; z-index:9999; }
     .print-footer { display:flex !important; position:fixed; bottom:0; left:0; right:0; padding:0.5mm 14mm 1mm; border-top:1px solid #dce3eb; background:#fff; }
@@ -245,11 +243,61 @@ button.filter-action:hover { background:var(--azul-50); }
     thead { display:table-header-group; }
     #rodapeSimulacao { font-size:7.5pt !important; padding:4mm 6mm !important; page-break-inside:avoid; break-inside:avoid; }
 }
+
+/* ===== Comum às páginas v2 ===== */
+.inicio-linha { grid-column:1; }
+.field > label.switch { display:inline-flex; margin-bottom:0; }
+.titulo-impressao { display:none; }
+.nota-campos { margin:14px 0 0; font-size:0.76rem; color:var(--texto-suave); line-height:1.45; }
+.nota-campos + .nota-campos { margin-top:4px; }
+.entrada input[readonly] { background:#f3f6fa; color:#5b6f89; }
+.page-container:has(#tabela tr) .estado-vazio { display:none; }
+
+/* Regras FBA (tabelas laterais) */
+.fba-titulo-coluna { font-size:0.66rem; }
+.fba-nota-rodape { margin-top:8px; font-size:0.74rem; color:var(--texto-suave); font-style:italic; }
+
+/* Impacto no limite (linhas geradas pelo cálculo) */
+.impacto-tabela { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+.impacto-tabela td { padding:9px 2px; border-bottom:1px solid #eef2f7; }
+.impacto-tabela td:last-child { text-align:right; font-weight:700; color:var(--texto); white-space:nowrap; }
+.impacto-tabela tr:last-child td { border-bottom:none; border-top:1px solid var(--borda); padding-top:11px; font-weight:700; color:var(--azul-800); }
+.impacto-tabela tr:last-child td:last-child { font-size:1.05rem; }
+
+/* Prorrogação */
+.status-prorrog { margin-top:14px; padding:10px 12px; border-radius:8px; font-size:0.84rem; font-weight:700; background:#eef6fb; color:#1f3b5a; }
+.status-prorrog.ok { background:#e8f6ee; color:#1d6b3a; }
+.status-prorrog.erro { background:#fdecee; color:#b2202f; }
+.status-prorrog.aviso { background:#fff6e0; color:#8a5a00; }
+.prorrog-card .switch { height:auto; margin-top:12px; font-size:0.84rem; }
+.prorrog-card .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.acoes .switch { height:40px; font-weight:600; color:var(--azul-800); }
+.tabela-parcelas tbody tr.historico-row td { color:#6b7a90; background:#f3f5f8; }
+.tabela-parcelas tbody tr.prorrog-row td { background:#fff6e0; font-weight:700; }
+.tabela-parcelas tbody tr.substituida-row td { color:#9aa6b6; background:#f6f7f9; text-decoration:line-through; }
+.tabela-parcelas tbody tr.substituida-row td:first-child::after { display:none; }
+#operacaoOriginal { margin-top:28px; }
+#operacaoOriginal .resumo-original { padding:18px 20px; }
+#operacaoOriginal h3 { margin:0 0 12px; font-size:1rem; color:var(--azul-800); }
+#operacaoOriginal .nota-original { margin-top:10px; font-size:0.76rem; color:var(--texto-suave); }
+#operacaoOriginal .tabela-card { margin-top:14px; }
+
+@media print {
+    .titulo-impressao { display:block !important; text-align:center; margin:12mm 0 4mm; }
+    .titulo-impressao h1 { font-size:1.4rem !important; line-height:1.3; color:#003366; margin:0; letter-spacing:0.01em; }
+    .topo { display:none !important; }
+    .impacto-tabela { display:none !important; }
+    #operacaoOriginal { page-break-before:always; break-before:page; margin-top:0 !important; }
+    #operacaoOriginal .resumo-original { box-shadow:none !important; padding:4mm 3mm !important; }
+    .tabela-parcelas tbody tr.prorrog-row td { background:#fff6e0 !important; }
+    .tabela-parcelas tbody tr.historico-row td { background:#f3f5f8 !important; }
+    .tabela-parcelas tbody tr.substituida-row td { background:#f6f7f9 !important; }
+}
 </style>
 <script src="menu.js"></script>
 </head>
 
-<body data-menu-ativo="SimuladorPEAC.html">
+<body data-menu-ativo="SimuladorPEACHist.html">
 <div class="print-header">
     <span class="print-header-left">Data da simulação: <span id="printDate"></span></span>
     <span class="print-header-right">Não possui caráter de proposta financeira</span>
@@ -260,190 +308,119 @@ button.filter-action:hover { background:var(--azul-50); }
 
 <header class="topo">
     <div>
-        <div class="trilha">Novas operações › Linha Governo</div>
+        <div class="trilha">Histórico › Linha Governo</div>
         <h1>PEAC FGI</h1>
     </div>
-    <span class="chip">Simulação sem caráter de proposta</span>
+    <span class="chip">Conferência de operação contratada</span>
 </header>
 
 <div class="page-container">
+<div class="titulo-impressao"><h1>Simulação BB Capital de Giro - PEAC FGI - Histórico</h1></div>
 
 <div class="layout-entrada">
 <section class="card dados-card">
     <div class="card-cabecalho"><h2>Dados da Operação</h2></div>
     <div class="card-corpo">
-
-    <div class="grupo-campos">
-        <p class="grupo-titulo">Operação</p>
-        <div class="form-grid">
-            <div class="field">
-                <label for="valor">Valor</label>
-                <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="valor" type="text" inputmode="decimal" data-mascara="moeda" value="1.000.000,00"></div>
-            </div>
-            <div class="field">
-                <label for="dataLiberacao">Data de liberação</label>
-                <div class="entrada"><input id="dataLiberacao" type="date"></div>
-            </div>
-            <div class="field">
-                <label for="dataBase">Data base</label>
-                <div class="entrada com-sufixo"><input id="dataBase" type="number" min="1" max="31"><span class="sufixo">dia</span></div>
-            </div>
-            <div class="field">
-                <label for="carencia">Carência</label>
-                <div class="entrada com-sufixo"><input id="carencia" type="number" value="6"><span class="sufixo">meses</span></div>
-            </div>
-            <div class="field">
-                <label for="prazo">Prazo total</label>
-                <div class="entrada com-sufixo"><input id="prazo" type="number" value="18"><span class="sufixo">meses</span></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="grupo-campos">
-        <p class="grupo-titulo">Taxa</p>
-        <div class="form-grid">
-            <div id="tipoField" class="field">
-                <label for="tipo">Tipo</label>
-                <div class="entrada">
-                    <select id="tipo">
-                        <option value="cdi">CDI + Sobretaxa</option>
-                        <option value="prefixado">Prefixado</option>
-                    </select>
-                </div>
-            </div>
-            <div id="taxasCdiContainer" class="field">
-                <label for="cdi">CDI atual</label>
-                <div class="entrada com-sufixo"><input id="cdi" type="text" inputmode="decimal" data-mascara="decimal" data-casas="4" value="13,90"><span class="sufixo">% a.a.</span></div>
-            </div>
-            <div id="sobretaxaContainer" class="field">
-                <label for="st">Sobretaxa</label>
-                <div class="entrada com-sufixo"><input id="st" type="text" inputmode="decimal" data-mascara="decimal" data-casas="4" value="4,93"><span class="sufixo">% a.a.</span></div>
-            </div>
-            <div id="taxaPrefixadoContainer" class="field">
-                <label for="pre">Taxa prefixada</label>
-                <div class="entrada com-sufixo"><input id="pre" type="text" inputmode="decimal" data-mascara="decimal" data-casas="4" value="2,30"><span class="sufixo">% a.m.</span></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="grupo-campos">
-        <p class="grupo-titulo">Despesas e garantias</p>
-        <div class="form-grid">
-            <div id="seguroContainer" class="field">
-                <label for="seguro">Seguro prestamista</label>
-                <label class="switch" for="seguro">
-                    <input type="checkbox" id="seguro" role="switch" checked>
-                    <span class="trilho"></span><span>Contratar</span>
-                </label>
-            </div>
-            <div id="sociosContainer" class="field">
-                <label for="socios">Sócios</label>
-                <div class="entrada"><input id="socios" type="number" min="1" value="1"></div>
-            </div>
-            <div id="descontoEcgContainer" class="field">
-                <label for="descontoEcg">Desconto ECG</label>
-                <div class="entrada com-sufixo"><input id="descontoEcg" type="text" inputmode="decimal" data-mascara="decimal" data-casas="2" value="40"><span class="sufixo">%</span></div>
-            </div>
-            <div id="iofDiarioContainer" class="field">
-                <label for="iofDiario">IOF diário</label>
-                <div class="entrada com-sufixo"><input id="iofDiario" type="text" inputmode="decimal" data-mascara="decimal" data-casas="4" value="0,0082"><span class="sufixo">%</span></div>
-            </div>
-            <div id="iofAdicionalContainer" class="field">
-                <label for="iofAdicional">IOF adicional</label>
-                <div class="entrada com-sufixo"><input id="iofAdicional" type="text" inputmode="decimal" data-mascara="decimal" data-casas="4" value="0,38"><span class="sufixo">%</span></div>
-            </div>
-            <div id="tipoTacContainer" class="field">
-                <label for="tipoTac">TAC</label>
-                <div class="entrada">
-                    <select id="tipoTac">
-                        <option value="automatico">Automática (3%)</option>
-                        <option value="manual">Manual</option>
-                    </select>
-                </div>
-            </div>
-            <div id="tacManualContainer" class="field" style="display:none">
-                <label for="tacManual">TAC manual</label>
-                <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="tacManual" type="text" inputmode="decimal" data-mascara="moeda" value="0,00"></div>
-            </div>
-        </div>
-    </div>
-
+<div class="grupo-campos">
+<p class="grupo-titulo">Operação</p>
+<div class="form-grid">
+<div class="field">
+    <label for="valor">Valor</label>
+    <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="valor" type="text" inputmode="decimal" data-mascara="moeda" value="1.000.000,00"></div>
+</div>
+<div class="field">
+    <label for="dataLiberacao">Data de liberação*</label>
+    <div class="entrada"><input id="dataLiberacao" type="date"></div>
+</div>
+<div class="field">
+    <label for="dataBase">Data base</label>
+    <div class="entrada com-sufixo"><input id="dataBase" type="number" min="1" max="31"><span class="sufixo">dia</span></div>
+</div>
+<div class="field">
+    <label for="carencia">Carência</label>
+    <div class="entrada com-sufixo"><input id="carencia" type="number" value="6"><span class="sufixo">meses</span></div>
+</div>
+<div class="field">
+    <label for="prazo">Prazo total</label>
+    <div class="entrada com-sufixo"><input id="prazo" type="number" value="18"><span class="sufixo">meses</span></div>
+</div>
+</div>
+</div>
+<div class="grupo-campos">
+<p class="grupo-titulo">Taxa</p>
+<div class="form-grid">
+<div id="tipoField" class="field">
+    <label for="tipo">Tipo</label>
+    <div class="entrada"><select id="tipo"><option value="cdi">CDI + Sobretaxa</option><option value="prefixado">Prefixado</option></select></div>
+</div>
+<div id="taxasCdiContainer" class="field">
+    <label for="cdi">CDI atual</label>
+    <div class="entrada com-sufixo"><input id="cdi" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="13.90"><span class="sufixo">% a.a.</span></div>
+</div>
+<div id="sobretaxaContainer" class="field">
+    <label for="st">Sobretaxa</label>
+    <div class="entrada com-sufixo"><input id="st" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="4.93"><span class="sufixo">% a.a.</span></div>
+</div>
+<div id="taxaPrefixadoContainer" class="field">
+    <label for="pre">Taxa prefixada</label>
+    <div class="entrada com-sufixo"><input id="pre" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="2.3"><span class="sufixo">% a.m.</span></div>
+</div>
+</div>
+</div>
+<div class="grupo-campos">
+<p class="grupo-titulo">Despesas e garantias</p>
+<div class="form-grid">
+<div id="seguroContainer" class="field">
+    <label for="seguro">Seguro prestamista</label>
+    <label class="switch" for="seguro"><input type="checkbox" id="seguro" role="switch" checked><span class="trilho"></span><span>Contratar</span></label>
+</div>
+<div id="sociosContainer" class="field">
+    <label for="socios">Sócios</label>
+    <div class="entrada"><input id="socios" type="number" min="1" value="1"></div>
+</div>
+<div id="descontoEcgContainer" class="field inicio-linha">
+    <label for="descontoEcg">Desconto ECG</label>
+    <div class="entrada com-sufixo"><input id="descontoEcg" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="2" value="40"><span class="sufixo">%</span></div>
+</div>
+<div id="iofDiarioContainer" class="field">
+    <label for="iofDiario">IOF diário</label>
+    <div class="entrada com-sufixo"><input id="iofDiario" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="0.0082"><span class="sufixo">%</span></div>
+</div>
+<div id="iofAdicionalContainer" class="field">
+    <label for="iofAdicional">IOF adicional</label>
+    <div class="entrada com-sufixo"><input id="iofAdicional" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="0.38"><span class="sufixo">%</span></div>
+</div>
+<div id="tipoTacContainer" class="field inicio-linha">
+    <label for="tipoTac">TAC</label>
+    <div class="entrada"><select id="tipoTac"><option value="automatico">Automática (3%)</option><option value="manual">Manual</option></select></div>
+</div>
+<div id="tacManualContainer" class="field" style="display:none">
+    <label for="tacManual">TAC manual</label>
+    <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="tacManual" type="text" inputmode="decimal" data-mascara="moeda-num" value="0.00"></div>
+</div>
+</div>
+</div>
+<p class="nota-campos">*A data de liberação é a mesma da cobrança do IOF no extrato da operação.</p>
     </div>
 </section>
 
 <div class="coluna-lateral">
-    <section class="card table-card">
-        <div class="card-cabecalho">
-            <div>
-                <h2>Regras por FBA</h2>
-                <div class="card-subtitulo">Faturamento bruto anual do ano anterior</div>
-            </div>
+<section class="card table-card">
+    <div class="card-cabecalho"><div><h2>Regras por FBA</h2><div class="card-subtitulo">Faturamento bruto anual do ano anterior</div></div></div>
+    <div class="card-corpo card-corpo-compacto">
+        <div class="fba-tabela" role="table">
+            <div class="fba-linha fba-cabecalho" role="row"><span role="columnheader">FBA</span><span role="columnheader">Carência</span><span role="columnheader">Parcelas</span><span role="columnheader">Prazo</span></div>
+            <div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="6" data-prazo-max="36"><span class="fba-faixa" role="cell">&lt; R$ 1 mi</span><span role="cell">6</span><span role="cell">6 a 30</span><span class="fba-prazo" role="cell">36</span></div><div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="6" data-prazo-max="48"><span class="fba-faixa" role="cell">R$ 1 a 5 mi</span><span role="cell">6</span><span role="cell">6 a 42</span><span class="fba-prazo" role="cell">48</span></div><div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="6" data-prazo-max="60"><span class="fba-faixa" role="cell">R$ 5 a 15 mi</span><span role="cell">6</span><span role="cell">6 a 54</span><span class="fba-prazo" role="cell">60</span></div><div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="12" data-prazo-max="60"><span class="fba-faixa" role="cell">&gt; R$ 15 mi</span><span role="cell">6 a 12</span><span role="cell">6 a 54</span><span class="fba-prazo" role="cell">60</span></div>
         </div>
-        <div class="card-corpo card-corpo-compacto">
-            <div class="fba-tabela" role="table" aria-label="Regras por faixa de FBA">
-                <div class="fba-linha fba-cabecalho" role="row">
-                    <span role="columnheader">FBA</span>
-                    <span role="columnheader">Carência</span>
-                    <span role="columnheader">Parcelas</span>
-                    <span role="columnheader">Prazo</span>
-                </div>
-                <div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="6" data-prazo-max="36">
-                    <span class="fba-faixa" role="cell">&lt; R$ 1 mi</span>
-                    <span role="cell">6</span>
-                    <span role="cell">6 a 30</span>
-                    <span class="fba-prazo" role="cell">36</span>
-                </div>
-                <div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="6" data-prazo-max="48">
-                    <span class="fba-faixa" role="cell">R$ 1 a 5 mi</span>
-                    <span role="cell">6</span>
-                    <span role="cell">6 a 42</span>
-                    <span class="fba-prazo" role="cell">48</span>
-                </div>
-                <div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="6" data-prazo-max="60">
-                    <span class="fba-faixa" role="cell">R$ 5 a 15 mi</span>
-                    <span role="cell">6</span>
-                    <span role="cell">6 a 54</span>
-                    <span class="fba-prazo" role="cell">60</span>
-                </div>
-                <div class="fba-linha" role="row" data-carencia-min="6" data-carencia-max="12" data-prazo-max="60">
-                    <span class="fba-faixa" role="cell">&gt; R$ 15 mi</span>
-                    <span role="cell">6 a 12</span>
-                    <span role="cell">6 a 54</span>
-                    <span class="fba-prazo" role="cell">60</span>
-                </div>
-            </div>
-            <div class="fba-nota">Valores em meses. Prazo = prazo total máximo. <span id="fbaAviso"></span></div>
-        </div>
-    </section>
-    <section class="card table-card">
-        <div class="card-cabecalho">
-            <h2>Impacto no limite</h2>
-            <span id="impactoPeriodo" class="selo-periodo" hidden></span>
-        </div>
-        <div class="card-corpo">
-            <div id="impactoLimiteCliente" class="impacto sem-valor">
-                <div class="impacto-total">
-                    <span>Total</span>
-                    <strong id="impactoTotal">—</strong>
-                </div>
-                <div class="impacto-barra" aria-hidden="true">
-                    <span class="parte-fundo" style="width:80%"></span>
-                    <span class="parte-fidejussoria" style="width:20%"></span>
-                </div>
-                <div class="impacto-item">
-                    <span class="marcador parte-fundo"></span>
-                    <span class="impacto-rotulo">Fundo de Aval <small>80%</small></span>
-                    <span id="impactoFundo" class="impacto-valor">—</span>
-                </div>
-                <div class="impacto-item">
-                    <span class="marcador parte-fidejussoria"></span>
-                    <span class="impacto-rotulo">Fidejussória / Real <small>20%</small></span>
-                    <span id="impactoFidejussoria" class="impacto-valor">—</span>
-                </div>
-                <div id="impactoVazio" class="impacto-vazio">Calcule a simulação para ver os valores.</div>
-            </div>
-        </div>
-    </section>
+        <div class="fba-nota">Valores em meses. Prazo = prazo total máximo. <span id="fbaAviso"></span></div>
+    </div>
+</section>
+<section class="card table-card">
+    <div class="card-cabecalho"><h2>Impacto no limite</h2></div>
+    <div class="card-corpo">
+        <table class="impacto-tabela"><tbody id="impactoLimiteCliente"><tr><td>Fundo de Aval</td><td>-</td></tr><tr><td>Fidejussória / Real</td><td>-</td></tr><tr><td>Total</td><td>-</td></tr></tbody></table>
+    </div>
+</section>
 </div>
 </div>
 
@@ -457,27 +434,28 @@ button.filter-action:hover { background:var(--azul-50); }
         Imprimir
     </button>
     <span class="espaco"></span>
+    
     <details id="filtroCamposResumo" class="filter-card">
         <summary>Campos do resumo</summary>
         <div class="filter-painel">
             <div class="filter-options">
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="valor" checked>Valor</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="taxaMensal" checked>Taxa Mensal</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="liberacao" checked>Liberação</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="dataBase" checked>Data Base</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="carencia" checked>Carência</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="prazoTotal" checked>Prazo Total</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="fatorK" checked>Fator K</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="valorECG" checked>Valor ECG</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="seguroTotal" checked>Seguro Total</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="seguroParcela" checked>Seguro Parcela</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="iofTotal" checked>IOF Total</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="despesaTotal" checked>Despesa Tot.</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="cetMensal" checked>CET Mensal</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="cetAnual" checked>CET Anual</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="totalPagar" checked>Total Pagar</label>
-                <label class="filter-option"><input type="checkbox" data-resumo-campo="totalLiquido" checked>Total Líq.</label>
-            </div>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="valor" checked>Valor</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="taxaMensal" checked>Taxa Mensal</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="liberacao" checked>Liberação</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="dataBase" checked>Data Base</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="carencia" checked>Carência</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="prazoTotal" checked>Prazo Total</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="fatorK" checked>Fator K</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="valorECG" checked>Valor ECG</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="seguroTotal" checked>Seguro Total</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="seguroParcela" checked>Seguro Parcela</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="iofTotal" checked>IOF Total</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="despesaTotal" checked>Despesa Tot.</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="cetMensal" checked>CET Mensal</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="cetAnual" checked>CET Anual</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="totalPagar" checked>Total Pagar</label>
+        <label class="filter-option"><input type="checkbox" data-resumo-campo="totalLiquido" checked>Total Líq.</label>
+    </div>
             <div class="filter-actions">
                 <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(true)">Todos</button>
                 <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(false)">Limpar</button>
@@ -497,15 +475,14 @@ button.filter-action:hover { background:var(--azul-50); }
 <section class="card tabela-card">
     <div class="table-wrap">
         <table class="tabela-parcelas">
-            <thead>
-                <tr><th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th id="parcelaHeader">Parcela</th><th>Saldo</th></tr>
-            </thead>
+            <thead><tr><th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th id="parcelaHeader">Parcela</th><th>Saldo</th></tr></thead>
             <tbody id="tabela"></tbody>
         </table>
     </div>
 </section>
 
 <div id="rodapeSimulacao" class="card"></div>
+
 </div>
 </div>
 
@@ -540,7 +517,7 @@ fetch("./CDI.json")
     .then(data => {
         cdiDados = data;
         const faixaVigente = data.taxasReferencia.find(item => item.dataFinal === null) || data.taxasReferencia[data.taxasReferencia.length - 1];
-        if(faixaVigente) cdi.value = formatarDecimalBR(faixaVigente.taxaAnual);
+        if(faixaVigente) cdi.value = faixaVigente.taxaAnual;
         cdiDadosCarregados = true;
     })
     .catch(error => console.error("Não foi possível carregar CDI.json:", error));
@@ -621,11 +598,79 @@ function diasCorridos(d1, d2){
 }
 
 function taxaAnual(){
-    return (1 + (lerNumero(cdi) / 100)) * (1 + (lerNumero(st) / 100));
+    return (1 + (parseFloat(cdi.value) / 100)) * (1 + (parseFloat(st.value) / 100));
 }
 
-function jurosCDI(saldo, taxaAnual, diasUteis){
+function jurosCDIProjetados(saldo, taxaAnual, diasUteis){
     return saldo * ((taxaAnual ** (diasUteis / 252)) - 1);
+}
+
+function obterDataMaximaIndice(){
+    const dataBase = new Date();
+    dataBase.setHours(0, 0, 0, 0);
+    dataBase.setDate(dataBase.getDate() + 31);
+    dataBase.setDate(dataBase.getDate() + 1);
+    return proximoUtil(dataBase);
+}
+
+function obterTaxaCDI(data){
+    const dataConsulta = new Date(data);
+    dataConsulta.setDate(dataConsulta.getDate() - 1);
+    const dataConsultaFormatada = formatDateLocal(dataConsulta);
+    const faixa = cdiDados.taxasReferencia.find(item => {
+        return dataConsultaFormatada >= item.dataInicial &&
+            (!item.dataFinal || dataConsultaFormatada <= item.dataFinal);
+    });
+    return faixa ? faixa.taxaAnual : null;
+}
+
+function obterIndiceCDI(data){
+    const dataAlvo = new Date(data);
+    dataAlvo.setHours(0, 0, 0, 0);
+    const dataAlvoFormatada = formatDateLocal(dataAlvo);
+    const historico = cdiDados.historico;
+    const registroExato = historico.find(item => item.data === dataAlvoFormatada);
+    if(registroExato) return registroExato.valor;
+
+    let registroBase = null;
+    for(const registro of historico){
+        if(registro.data <= dataAlvoFormatada){
+            registroBase = registro;
+        } else {
+            break;
+        }
+    }
+
+    if(!registroBase) return null;
+
+    let cursor = parseDateInputLocal(registroBase.data);
+    let indice = registroBase.valor;
+    while(cursor < dataAlvo){
+        cursor.setDate(cursor.getDate() + 1);
+        if(!ehUtil(cursor)) continue;
+        const taxa = obterTaxaCDI(cursor);
+        if(taxa === null) return null;
+        indice = Number((indice * ((1 + taxa / 100) ** (1 / 252))).toFixed(8));
+    }
+    return indice;
+}
+
+function jurosCDI(saldo, sobretaxa, dataAnterior, dataAtual, diasUteisPeriodo){
+    const dataMaximaIndice = obterDataMaximaIndice();
+    if(dataAtual > dataMaximaIndice){
+        return jurosCDIProjetados(saldo, taxaAnual(), diasUteisPeriodo);
+    }
+
+    const indiceAnterior = obterIndiceCDI(dataAnterior);
+    const indiceAtual = obterIndiceCDI(dataAtual);
+    if(indiceAnterior === null || indiceAtual === null){
+        throw new Error("Não foi possível obter o índice CDI para uma das datas da parcela.");
+    }
+
+    return saldo * (
+        (indiceAtual / indiceAnterior) *
+        ((1 + sobretaxa / 100) ** (diasUteisPeriodo / 252)) - 1
+    );
 }
 
 function jurosPrefixado(saldo, taxaMensal, diasCorridos){
@@ -778,8 +823,8 @@ function calcular(){
     let totalPago=0;
     let fluxosParcelas = [];
 
-    const iofDiario = lerNumero(iofDiarioInput, 0.0082) / 100;
-    const iofAdicional = lerNumero(iofAdicionalInput, 0.38) / 100;
+    const iofDiario = parseFloat(iofDiarioInput.value || 0.0082) / 100;
+    const iofAdicional = parseFloat(iofAdicionalInput.value || 0.38) / 100;
     let totalIOF = valor * iofAdicional;
     let diasAcumulados = 0;
 
@@ -802,7 +847,7 @@ function calcular(){
     let seguroParcela = parcelasSeguro > 0 ? totalSeguro / parcelasSeguro : 0;
 
 const descontoECG =
-    lerNumero(document.getElementById("descontoEcg"), 40) / 100;
+    parseFloat(document.getElementById("descontoEcg").value || 40) / 100;
 
 prazoFatorK = prazo;   
     if(base > 28){
@@ -823,7 +868,7 @@ if(tacAutomatico < 100) tacAutomatico = 100;
 if(tacAutomatico > 5000) tacAutomatico = 5000;
 
 const tacManual =
-    lerNumero(document.getElementById("tacManual"));
+    parseFloat(document.getElementById("tacManual").value);
 
 const tac =
     tipoTacSelect.value === "manual"
@@ -845,10 +890,10 @@ if(tipoTacSelect.value === "manual" && isNaN(tacManual)){
         let juros, diasExibidos, iofPeriodo = 0;
 
         if(tipo.value==="cdi"){
-            juros = jurosCDI(saldo, taxaAnual(), du);
+            juros = jurosCDI(saldo, parseFloat(st.value), anterior, data, du);
             diasExibidos = du;
         } else {
-            let taxa = lerNumero(pre) / 100;
+            let taxa = parseFloat(pre.value) / 100;
             juros = jurosPrefixado(saldo, taxa, dc);
             diasExibidos = dc;
         }
@@ -925,7 +970,7 @@ if(tipoTacSelect.value === "manual" && isNaN(tacManual)){
     const taxaMensalAtual =
         tipo.value === "cdi"
             ? (taxaAnual() ** (duTaxa / 252)) - 1
-            : lerNumero(pre) / 100;
+            : parseFloat(pre.value) / 100;
     const linhasSeguro = usarSeguro
         ? `
     Seguro Total: R$ ${totalSeguro.toFixed(2)}<br>
@@ -986,7 +1031,6 @@ ${legendaParcela}</p>
     // marcar resultado como válido após calcular
     resultadosValidos = true;
     if(btnPrint) btnPrint.disabled = false;
-    document.getElementById("estadoVazio").hidden = true;
 }
 
 function resetarResultados(){
@@ -995,7 +1039,6 @@ function resetarResultados(){
         tabela.innerHTML = "";
         resumo.innerHTML = `<p style='color:#b2202f;font-weight:700;'>Alguns dados foram alterados. Clique em Calcular novamente para atualizar a simulação.</p>`;
         rodapeSimulacao.innerHTML = "";
-        impactoLimiteCliente.classList.add("sem-valor");
         if(btnPrint) btnPrint.disabled = true;
     }
 }
@@ -1118,9 +1161,9 @@ function atualizarDataBase(){
 
 function atualizarTipoTaxa(){
     const usarPrefixado = tipo.value === "prefixado";
-    taxasCdiContainer.style.display = usarPrefixado ? "none" : "";
-    sobretaxaContainer.style.display = usarPrefixado ? "none" : "";
-    taxaPrefixadoContainer.style.display = usarPrefixado ? "" : "none";
+    taxasCdiContainer.style.display = usarPrefixado ? "none" : "block";
+    sobretaxaContainer.style.display = usarPrefixado ? "none" : "block";
+    taxaPrefixadoContainer.style.display = usarPrefixado ? "block" : "none";
     cdi.disabled = usarPrefixado;
     st.disabled = usarPrefixado;
     pre.disabled = !usarPrefixado;
@@ -1137,7 +1180,7 @@ function atualizarSocios(){
 
 function atualizarTacManual(){
     const usarTacManual = tipoTacSelect.value === "manual";
-    tacManualContainer.style.display = usarTacManual ? "" : "none";
+    tacManualContainer.style.display = usarTacManual ? "block" : "none";
     tacManualInput.disabled = !usarTacManual;
 }
 
@@ -1145,42 +1188,16 @@ function atualizarImpactoLimite(valorContratado, periodo){
     const fundo = valorContratado * 0.8;
     const fidejussoria = valorContratado * 0.2;
     const total = valorContratado;
-    document.getElementById("impactoTotal").textContent = formatReal(total);
-    document.getElementById("impactoFundo").textContent = formatReal(fundo);
-    document.getElementById("impactoFidejussoria").textContent = formatReal(fidejussoria);
-    const selo = document.getElementById("impactoPeriodo");
-    selo.textContent = periodo;
-    selo.hidden = false;
-    impactoLimiteCliente.classList.remove("sem-valor");
+    impactoLimiteCliente.innerHTML = `
+        <tr><td>Fundo de Aval ${periodo}</td><td>${formatReal(fundo)}</td></tr>
+        <tr><td>Fidejussória / Real ${periodo}</td><td>${formatReal(fidejussoria)}</td></tr>
+        <tr><td>Total ${periodo}</td><td>${formatReal(total)}</td></tr>
+    `;
 }
-
-// Esmaece as faixas de FBA que não comportam o prazo/carência informados.
-function atualizarRegrasFba(){
-    const prazo = parseInt(prazoInput.value, 10);
-    const carencia = parseInt(carenciaInput.value, 10);
-    let foraDeTodas = true, algumaFora = false;
-    document.querySelectorAll(".fba-linha[data-prazo-max]").forEach(linha => {
-        const prazoOk = isNaN(prazo) || prazo <= Number(linha.dataset.prazoMax);
-        const carenciaOk = isNaN(carencia) || (carencia >= Number(linha.dataset.carenciaMin) && carencia <= Number(linha.dataset.carenciaMax));
-        const dentro = prazoOk && carenciaOk;
-        linha.classList.toggle("fora", !dentro);
-        linha.title = dentro ? "" : "Prazo ou carência informados não se enquadram nesta faixa";
-        if(dentro) foraDeTodas = false; else algumaFora = true;
-    });
-    document.getElementById("fbaAviso").textContent = foraDeTodas
-        ? "Prazo/carência informados não se enquadram em nenhuma faixa."
-        : (algumaFora ? "Faixas esmaecidas não comportam o prazo/carência informados." : "");
-}
-
-prazoInput.addEventListener("input", atualizarRegrasFba);
-prazoInput.addEventListener("blur", atualizarRegrasFba);
-carenciaInput.addEventListener("input", atualizarRegrasFba);
-carenciaInput.addEventListener("blur", atualizarRegrasFba);
-atualizarRegrasFba();
 
 // --- Navigation ---
 function voltar(){
-    window.location.href = './';
+    window.location.href = './index.html';
 }
 
 // --- Input change listener to reset results ---
@@ -1215,103 +1232,154 @@ atualizarTipoTaxa();
 atualizarSocios();
 atualizarTacManual();
 
+</script>
 
-// Fecha o painel de filtro ao clicar fora dele
-document.addEventListener("click", evento => {
-    const filtro = document.getElementById("filtroCamposResumo");
-    if(filtro && filtro.open && !filtro.contains(evento.target)) filtro.open = false;
-});
+<script>
+/* =====================================================================
+   CAMADA DE INTERFACE (v2) — não altera nenhum cálculo.
+   - Campos com data-mascara="moeda": exibem e entregam o valor em formato
+     brasileiro (como o script original já lê, via parseValor).
+   - Campos com data-mascara="moeda-num" ou "decimal-num": exibem em formato
+     brasileiro, mas o script original continua recebendo o mesmo texto de
+     antes (ponto decimal), pois o .value desses campos é traduzido.
+   ===================================================================== */
+(function(){
+    const nativo = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    const lerTela = campo => nativo.get.call(campo);
+    const gravarTela = (campo, texto) => nativo.set.call(campo, texto);
 
-
-// ================= Números no formato brasileiro =================
-
-// Lê um campo com pontos de milhar e vírgula decimal ("1.234,56" -> 1234.56).
-// Se o campo estiver vazio, devolve o valor padrão (ou NaN).
-function lerNumero(campo, padrao){
-    const texto = String(campo.value || "").trim();
-    if(texto === "") return padrao === undefined ? NaN : padrao;
-    return parseFloat(texto.replace(/\./g, "").replace(",", "."));
-}
-
-function formatarDecimalBR(numero){
-    if(numero === null || numero === undefined || isNaN(numero)) return "";
-    return String(numero).replace(".", ",");
-}
-
-function agruparMilhar(inteiro){
-    return inteiro.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-// Formata o texto: pontos existentes são separadores de milhar (descartados e refeitos),
-// a primeira vírgula é a decimal e as casas decimais são limitadas.
-function formatarDigitado(texto, casas){
-    texto = texto.replace(/[^\d,]/g, "");
-    const posVirgula = texto.indexOf(",");
-    let inteiro = posVirgula >= 0 ? texto.slice(0, posVirgula) : texto;
-    let decimal = posVirgula >= 0 ? texto.slice(posVirgula + 1).replace(/,/g, "").slice(0, casas) : null;
-    inteiro = agruparMilhar(inteiro);
-    if(inteiro === "" && decimal !== null) inteiro = "0";
-    return decimal !== null ? `${inteiro},${decimal}` : inteiro;
-}
-
-function aplicarMascara(campo, evento){
-    const casas = campo.dataset.mascara === "moeda" ? 2 : parseInt(campo.dataset.casas || "4", 10);
-    let original = campo.value;
-    const cursor = campo.selectionStart ?? original.length;
-    // Ponto digitado pelo usuário (tecla "." ou "," do teclado numérico) vira vírgula decimal.
-    if(evento && evento.data === "." && cursor > 0 && original[cursor - 1] === "."){
-        original = original.slice(0, cursor - 1) + "," + original.slice(cursor);
+    function casasDe(campo){
+        return campo.dataset.mascara.startsWith("moeda") ? 2 : parseInt(campo.dataset.casas || "4", 10);
     }
-    // quantos dígitos/vírgula existem antes do cursor (para reposicioná-lo depois)
-    const relevantesAntes = original.slice(0, cursor).replace(/[^\d,]/g, "").length;
-    const formatado = formatarDigitado(original, casas);
-    if(formatado === campo.value) return;
-    campo.value = formatado;
-    let novaPos = 0, contados = 0;
-    while(novaPos < formatado.length && contados < relevantesAntes){
-        if(/[\d,]/.test(formatado[novaPos])) contados++;
-        novaPos++;
+    function agrupar(inteiro){
+        return inteiro.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
-    campo.setSelectionRange(novaPos, novaPos);
-}
+    function formatarDigitado(texto, casas){
+        texto = texto.replace(/[^\d,]/g, "");
+        const pos = texto.indexOf(",");
+        let inteiro = pos >= 0 ? texto.slice(0, pos) : texto;
+        const decimal = pos >= 0 ? texto.slice(pos + 1).replace(/,/g, "").slice(0, casas) : null;
+        inteiro = agrupar(inteiro);
+        if(inteiro === "" && decimal !== null) inteiro = "0";
+        return decimal !== null ? `${inteiro},${decimal}` : inteiro;
+    }
+    function lerNumeroTela(campo){
+        const t = lerTela(campo).trim();
+        if(t === "") return NaN;
+        return parseFloat(t.replace(/\./g, "").replace(",", "."));
+    }
+    // valor no formato do script (ponto decimal) -> texto exibido
+    function paraTela(campo, valor){
+        if(valor === null || valor === undefined) return "";
+        const s = String(valor).trim();
+        if(s === "" || isNaN(Number(s))) return s;
+        if(campo.dataset.mascara === "moeda-num"){
+            return Number(s).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+        }
+        const negativo = s.startsWith("-");
+        const [inteiro, decimal] = s.replace("-", "").split(".");
+        return (negativo ? "-" : "") + agrupar(inteiro) + (decimal !== undefined ? "," + decimal : "");
+    }
+    // texto exibido -> formato que o script original sempre recebeu
+    function paraScript(campo){
+        const t = lerTela(campo).trim();
+        return t === "" ? "" : t.replace(/\./g, "").replace(",", ".");
+    }
 
-function completarMoeda(campo){
-    if(campo.dataset.mascara !== "moeda" || campo.value.trim() === "") return;
-    const numero = lerNumero(campo);
-    if(isNaN(numero)) return;
-    campo.value = numero.toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
-}
-
-// Ao clicar em um campo, ele é limpo para nova digitação. O valor anterior fica
-// visível como dica e é restaurado se o campo for deixado em branco.
-function prepararCamposDados(){
-    document.querySelectorAll('.dados-card input').forEach(campo => {
-        if(campo.type === "checkbox" || campo.type === "date") return;
-
-        campo.addEventListener("focus", () => {
-            campo.dataset.anterior = campo.value;
-            campo.dataset.placeholderOriginal = campo.getAttribute("placeholder") || "";
-            campo.setAttribute("placeholder", campo.value);
-            campo.value = "";
+    document.querySelectorAll('input[data-mascara$="-num"]').forEach(campo => {
+        const atual = lerTela(campo);
+        Object.defineProperty(campo, "value", {
+            configurable: true,
+            get(){ return paraScript(campo); },
+            set(v){ gravarTela(campo, paraTela(campo, v)); }
         });
+        gravarTela(campo, paraTela(campo, atual));
+    });
 
+    function aplicarMascara(campo, evento){
+        const casas = casasDe(campo);
+        let original = lerTela(campo);
+        const cursor = campo.selectionStart ?? original.length;
+        if(evento && evento.data === "." && cursor > 0 && original[cursor - 1] === "."){
+            original = original.slice(0, cursor - 1) + "," + original.slice(cursor);
+        }
+        const relevantesAntes = original.slice(0, cursor).replace(/[^\d,]/g, "").length;
+        const formatado = formatarDigitado(original, casas);
+        if(formatado === lerTela(campo)) return;
+        gravarTela(campo, formatado);
+        let pos = 0, contados = 0;
+        while(pos < formatado.length && contados < relevantesAntes){
+            if(/[\d,]/.test(formatado[pos])) contados++;
+            pos++;
+        }
+        campo.setSelectionRange(pos, pos);
+    }
+
+    function completarMoeda(campo){
+        if(!campo.dataset.mascara || !campo.dataset.mascara.startsWith("moeda")) return;
+        const n = lerNumeroTela(campo);
+        if(isNaN(n)) return;
+        gravarTela(campo, n.toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 }));
+    }
+
+    // Ao clicar, o campo é limpo para nova digitação; o valor anterior fica como dica
+    // e volta se o campo for deixado em branco.
+    document.querySelectorAll(".dados-card input").forEach(campo => {
+        if(campo.type === "checkbox" || campo.type === "date") return;
+        campo.addEventListener("focus", () => {
+            if(campo.readOnly || campo.disabled) return;
+            campo.dataset.anterior = lerTela(campo);
+            campo.dataset.placeholderOriginal = campo.getAttribute("placeholder") || "";
+            campo.setAttribute("placeholder", lerTela(campo) || campo.dataset.placeholderOriginal);
+            gravarTela(campo, "");
+        });
         campo.addEventListener("blur", () => {
-            if(campo.value.trim() === "" && campo.dataset.anterior !== undefined){
-                campo.value = campo.dataset.anterior;
-            }
+            if(campo.dataset.anterior === undefined) return;
+            if(lerTela(campo).trim() === "") gravarTela(campo, campo.dataset.anterior);
             completarMoeda(campo);
             campo.setAttribute("placeholder", campo.dataset.placeholderOriginal || "");
             delete campo.dataset.anterior;
         });
-
         if(campo.dataset.mascara){
             campo.addEventListener("input", evento => aplicarMascara(campo, evento));
         }
     });
-}
 
-prepararCamposDados();
+    // Fecha o painel "Campos do resumo" ao clicar fora dele
+    document.addEventListener("click", evento => {
+        const filtro = document.getElementById("filtroCamposResumo");
+        if(filtro && filtro.open && !filtro.contains(evento.target)) filtro.open = false;
+    });
 
+    // Regras FBA: esmaece faixas que não comportam o prazo/carência informados
+    const linhasFba = document.querySelectorAll(".fba-linha[data-prazo-max]");
+    const campoPrazo = document.getElementById("prazo");
+    const campoCarencia = document.getElementById("carencia");
+    const aviso = document.getElementById("fbaAviso");
+    function atualizarRegrasFba(){
+        const prazo = parseInt(lerTela(campoPrazo), 10);
+        const carencia = parseInt(lerTela(campoCarencia), 10);
+        let todasFora = true, algumaFora = false;
+        linhasFba.forEach(linha => {
+            const prazoOk = isNaN(prazo) || prazo <= Number(linha.dataset.prazoMax);
+            const carenciaOk = isNaN(carencia) || (carencia >= Number(linha.dataset.carenciaMin) && carencia <= Number(linha.dataset.carenciaMax));
+            const dentro = prazoOk && carenciaOk;
+            linha.classList.toggle("fora", !dentro);
+            if(dentro) todasFora = false; else algumaFora = true;
+        });
+        if(aviso){
+            aviso.textContent = todasFora ? "Prazo/carência informados não se enquadram em nenhuma faixa."
+                : (algumaFora ? "Faixas esmaecidas não comportam o prazo/carência informados." : "");
+        }
+    }
+    if(linhasFba.length && campoPrazo && campoCarencia){
+        ["input", "blur"].forEach(ev => {
+            campoPrazo.addEventListener(ev, atualizarRegrasFba);
+            campoCarencia.addEventListener(ev, atualizarRegrasFba);
+        });
+        atualizarRegrasFba();
+    }
+})();
 </script>
 
 </body>
