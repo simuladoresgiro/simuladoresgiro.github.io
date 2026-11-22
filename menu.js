@@ -110,7 +110,7 @@ const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v1.0";
         const aside = document.createElement("aside");
         aside.className = "menu-lateral";
         aside.innerHTML = `
-            <a class="menu-marca" href="./index.html">
+            <a class="menu-marca" href="./">
                 <span class="menu-logo">BB</span>
                 <span><strong>Capital de Giro</strong><small>Central de Simuladores</small></span>
             </a>
