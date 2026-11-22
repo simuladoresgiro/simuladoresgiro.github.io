@@ -87,6 +87,15 @@ const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v1.0";
         estilo.textContent = CSS;
         document.head.appendChild(estilo);
 
+        // Ícone da aba (favicon), se a página não definir um próprio
+        if(!document.querySelector('link[rel~="icon"]')){
+            const icone = document.createElement("link");
+            icone.rel = "icon";
+            icone.type = "image/svg+xml";
+            icone.href = "favicon.svg";
+            document.head.appendChild(icone);
+        }
+
         const atual = (document.body.dataset.menuAtivo || location.pathname.split("/").pop() || "index.html").toLowerCase();
         const emTesteV2 = /_v2\.html$/i.test(location.pathname);
 
