@@ -32,7 +32,7 @@ const MENU_SIMULADORES = [
         { nome: "PRONAMPE / PROCRED", arquivo: "SimuladorPRONAMPEProrrog.html" }
     ]},
     { titulo: "Amortizações", itens: [
-        { nome: "PEAC FGI", arquivo: null, tag: "EM BREVE" },
+        { nome: "PEAC FGI", arquivo: "SimuladorPEACAmort.html" },
         { nome: "PRONAMPE / PROCRED", arquivo: null, tag: "EM BREVE" }
     ]}
 ];
