@@ -39,7 +39,7 @@ const MENU_SIMULADORES = [
     ]}
 ];
 
-const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v2.0";
+const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v1.0";
 
 (function(){
     const CSS = `
@@ -53,7 +53,7 @@ const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v2.0";
     }
     .menu-lateral * { box-sizing:border-box; }
     .menu-marca { display:flex; align-items:center; gap:10px; padding:20px 18px 16px; text-decoration:none; color:#fff; border-bottom:1px solid rgba(255,255,255,0.08); }
-    .menu-marca .menu-logo { width:34px; height:34px; border-radius:9px; background:#fcd116; color:#003366; display:grid; place-items:center; font-weight:800; font-size:0.95rem; flex:0 0 auto; }
+    .menu-marca .menu-logo { width:34px; height:34px; border-radius:9px; flex:0 0 auto; display:block; box-shadow:0 0 0 1px rgba(255,255,255,0.28); }
     .menu-marca strong { display:block; font-size:0.98rem; }
     .menu-marca small { display:block; font-size:0.72rem; color:#9fb6d1; }
     .menu-lateral nav { flex:1; overflow-y:auto; padding:10px 10px 16px; }
@@ -120,7 +120,7 @@ const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v2.0";
         aside.className = "menu-lateral";
         aside.innerHTML = `
             <a class="menu-marca" href="./">
-                <span class="menu-logo">BB</span>
+                <img class="menu-logo" src="favicon.svg" alt="">
                 <span><strong>Capital de Giro</strong><small>Central de Simuladores</small></span>
             </a>
             <nav aria-label="Simuladores">${grupos}</nav>
