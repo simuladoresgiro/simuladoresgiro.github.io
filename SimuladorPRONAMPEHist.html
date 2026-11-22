@@ -2,307 +2,427 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Simulador Giros - F3421879</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRONAMPE / PROCRED · Histórico</title>
 <style>
-.page-container { max-width:1080px; margin:0 auto; padding:24px 20px 40px; }
-h1 { color:#003366; text-align:center; margin-bottom:24px; font-size:2rem; letter-spacing:0.02em; }
-@media print { h1 { font-size:1.5rem; } }
-
-/* Card: Dados da Empresa e da Operação */
-.table-card, .dados-card { background:#fff; border-radius:12px; padding:18px; border:1px solid #e6eef6; box-shadow:0 8px 20px rgba(15,41,77,0.04); margin-bottom:18px; }
-.card-title { font-size:1rem; color:#1f3b5a; margin:0 0 12px 0; display:flex; align-items:center; gap:10px; }
-.dados-card .card-title::before{ content:""; width:28px; height:28px; background:#eef6fb; display:inline-block; border-radius:6px; box-shadow:inset 0 0 0 1px #d8eaf6; }
-.dados-card .form-grid { gap:16px 20px; }
-.dados-card .field{ display:flex; flex-direction:column; align-items:flex-start; }
-.dados-card label{ display:block; width:auto; text-align:left; margin-bottom:6px; color:#4b607e; font-weight:600; }
-.dados-card input, .dados-card select{ padding:10px 12px 10px 40px; border-radius:8px; border:1px solid #d7e2ee; background:#fff; height:44px; box-shadow:none; max-width:100%; }
-.dados-card .field.full-width{ grid-column:1 / -1; display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; }
-.dados-card .field-inline{ display:flex; gap:12px; align-items:center; }
-.dados-card input{ background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='%23d0e6f6'/></svg>"); background-repeat:no-repeat; background-position:12px center; }
-.dados-card select{ background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%23999' d='M7 10l5 5 5-5z'/></svg>"); background-repeat:no-repeat; background-position:12px center; background-size:12px; }
-
-body { font-family: Arial, sans-serif; margin:0; background:#f4f7fb; color:#23304f; }
-.data-note { margin-top:10px; font-size:0.82rem; color:#5b6f89; line-height:1.4; }
-
-label { display:inline-block; width:120px; font-weight:600; color:#354156; text-align:right; }
-input, select { margin:4px 0; padding:10px 12px; border:1px solid #ccd4de; border-radius:10px; width:100%; max-width:120px; box-sizing:border-box; background:#fff; color:#1b2c42; }
-
-.form-grid {
-    max-width:1080px;
-    margin:0 auto;
-    display:grid;
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
-    gap:18px 24px;
-    align-items:center;
-    justify-items:start;
+/* ================= Tokens ================= */
+:root {
+    --azul-900:#002244;
+    --azul-800:#003366;
+    --azul-700:#0a4a85;
+    --azul-100:#e8f0fa;
+    --azul-50:#f4f8fd;
+    --amarelo:#fcd116;
+    --texto:#1b2c42;
+    --texto-suave:#5b6f89;
+    --borda:#dde5ef;
+    --fundo:#f2f5f9;
+    --branco:#fff;
+    --erro:#b2202f;
+    --sucesso:#1d6b3a;
+    --raio:12px;
+    --sombra:0 1px 2px rgba(16,38,64,0.06), 0 6px 18px rgba(16,38,64,0.05);
 }
 
-.field {
-    display:grid;
-    grid-template-columns: 120px minmax(110px, 120px);
-    align-items:center;
-    gap:10px;
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body {
+    font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background:var(--fundo);
+    color:var(--texto);
+    font-size:14px;
+    line-height:1.45;
 }
 
-.field label { width:auto; }
-input[type="checkbox"] { width:18px; height:18px; padding:0; margin:auto; justify-self:center; }
-input, select { max-width:none; }
-
-@media (max-width: 760px) {
-    .form-grid { grid-template-columns: repeat(3, minmax(100px, 1fr)); gap:12px 12px; }
-    .field { grid-template-columns: minmax(80px, 1fr) 1fr; }
-    label { width:auto; }
+/* ================= Conteúdo ================= */
+.conteudo { min-height:100vh; }
+.topo {
+    position:sticky; top:0; z-index:20; background:rgba(242,245,249,0.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--borda); padding:14px 32px; display:flex; align-items:center; gap:14px;
 }
+.topo .trilha { font-size:0.78rem; color:var(--texto-suave); }
+.topo h1 { margin:2px 0 0; font-size:1.35rem; color:var(--azul-800); letter-spacing:0.01em; }
+.topo .chip { margin-left:auto; font-size:0.75rem; color:var(--texto-suave); background:var(--branco); border:1px solid var(--borda); padding:6px 10px; border-radius:999px; white-space:nowrap; }
 
-#taxasCdiContainer { grid-column: 1; grid-row: 3; }
-#sobretaxaContainer { grid-column: 2; grid-row: 3; }
-#jurosCarenciaContainer { grid-column: 3; grid-row: 3; }
-#seguroContainer { grid-column: 1; grid-row: 4; }
-#sociosContainer { grid-column: 2; grid-row: 4; }
-#iofDiarioContainer { grid-column: 1; grid-row: 5; }
-#iofAdicionalContainer { grid-column: 2; grid-row: 5; }
+.page-container { max-width:1180px; margin:0 auto; padding:24px 32px 48px; }
 
-.dados-e-tabelas { display:grid; grid-template-columns: 1.6fr 1fr; gap:24px; align-items:start; }
-.tabelas-laterais { display:grid; gap:18px; }
-.table-card { background:#fff; border-radius:12px; padding:18px; border:1px solid #e6eef6; box-shadow:0 8px 20px rgba(15,41,77,0.04); }
-.mini-table { width:100%; border-collapse:collapse; margin-top:10px; }
-.mini-table th, .mini-table td { border:1px solid #d7dbe1; padding:10px; font-size:0.92rem; text-align:center; white-space:nowrap; }
-.mini-table th { background:#003366; color:#fff; font-weight:700; }
-.mini-table td:first-child { width:60%; }
+/* ================= Cards ================= */
+.card { background:var(--branco); border:1px solid var(--borda); border-radius:var(--raio); box-shadow:var(--sombra); }
+.card-cabecalho { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--borda); }
+.card-cabecalho h2 { margin:0; font-size:1rem; color:var(--azul-800); }
+.card-corpo { padding:18px 20px 20px; }
 
-.field.full-width {
-    grid-column: 1 / -1;
-    display:grid;
-    grid-template-columns: repeat(2, minmax(160px, 180px));
-    gap:18px 24px;
-    justify-content:start;
+.layout-entrada { display:grid; grid-template-columns:minmax(0, 1fr) 340px; gap:20px; align-items:start; }
+.coluna-lateral { display:grid; gap:20px; }
+
+/* ================= Formulário ================= */
+.grupo-campos + .grupo-campos { margin-top:18px; padding-top:18px; border-top:1px dashed var(--borda); }
+.grupo-titulo { font-size:0.72rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--texto-suave); margin:0 0 12px; }
+.form-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px 18px; }
+/* Despesas e garantias: Seguro/Sócios | Desconto ECG/IOF diário/IOF adicional | TAC/TAC manual */
+#descontoEcgContainer, #tipoTacContainer { grid-column:1; }
+
+.field { display:flex; flex-direction:column; gap:0; min-width:0; }
+.field > label { display:block; margin-bottom:6px; font-size:0.82rem; font-weight:600; color:#3c4f69; }
+
+.entrada { position:relative; display:flex; align-items:center; }
+.entrada input, .entrada select, .field > select {
+    width:100%; height:40px; padding:0 12px; border:1px solid #cdd8e5; border-radius:8px;
+    background:var(--branco); color:var(--texto); font:inherit; font-size:0.92rem;
+    transition:border-color .15s ease, box-shadow .15s ease;
 }
+.entrada input:focus, .entrada select:focus, .field > select:focus { outline:none; border-color:var(--azul-700); box-shadow:0 0 0 3px rgba(10,74,133,0.15); }
+.entrada input:disabled { background:#f3f6fa; color:#8a99ad; }
+.entrada .prefixo, .entrada .sufixo { position:absolute; font-size:0.8rem; color:var(--texto-suave); pointer-events:none; }
+.entrada .prefixo { left:12px; }
+.entrada .sufixo { right:12px; }
+.entrada.com-prefixo input { padding-left:36px; }
+.entrada.com-sufixo input { padding-right:52px; }
+.entrada input[type="number"] { -moz-appearance:textfield; }
+.entrada input[type="number"]::-webkit-inner-spin-button, .entrada input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
 
-.subfield {
-    display:grid;
-    grid-template-columns: 140px minmax(120px, 220px);
-    align-items:center;
-    gap:10px;
-}
+/* Switch (checkbox estilizado) */
+.field > label.switch { font-size:0.88rem; font-weight:400; color:var(--texto); }
+.switch { display:inline-flex; align-items:center; gap:10px; height:40px; cursor:pointer; user-select:none; font-size:0.88rem; color:var(--texto); }
+.switch input { position:absolute; opacity:0; width:0; height:0; }
+.switch .trilho { position:relative; width:42px; height:24px; border-radius:999px; background:#c3ccd8; transition:background .2s ease; flex:0 0 auto; }
+.switch .trilho::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .2s ease; }
+.switch input:checked + .trilho { background:var(--azul-800); }
+.switch input:checked + .trilho::after { transform:translateX(18px); }
+.switch input:focus-visible + .trilho { outline:2px solid var(--azul-700); outline-offset:2px; }
 
-.field-inline {
-    display:grid;
-    grid-template-columns: 120px 1fr;
-    align-items:center;
-    gap:8px;
-}
+/* ================= Tabelas laterais ================= */
+.mini-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+.mini-table th { text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--texto-suave); font-weight:700; padding:0 8px 8px; border-bottom:1px solid var(--borda); }
+.mini-table td { padding:9px 8px; border-bottom:1px solid #eef2f7; }
+.mini-table tr:last-child td { border-bottom:none; }
+.mini-table td:not(:first-child), .mini-table th:not(:first-child) { text-align:right; }
+.card-subtitulo { font-size:0.75rem; color:var(--texto-suave); margin-top:2px; }
+.card-corpo-compacto { padding:12px 14px 14px; }
 
-.button-row {
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    justify-content:center;
-    margin:20px auto 0;
-    max-width:960px;
-}
+/* Regras por FBA */
+.fba-tabela { display:grid; gap:4px; }
+.fba-linha { display:grid; grid-template-columns:minmax(0, 1.4fr) 0.9fr 1fr 0.7fr; white-space:nowrap; align-items:center; gap:6px; padding:9px 10px; border-radius:8px; font-size:0.84rem; font-variant-numeric:tabular-nums; transition:opacity .2s ease, background .2s ease; }
+.fba-linha > span:not(:first-child) { text-align:center; }
+.fba-linha:not(.fba-cabecalho) { background:var(--azul-50); border:1px solid #e3ecf6; }
+.fba-cabecalho { padding:0 10px 4px; font-size:0.66rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--texto-suave); }
+.fba-faixa { font-weight:600; color:var(--texto); }
+.fba-prazo { font-weight:700; color:var(--azul-800); }
+.fba-linha.fora { opacity:0.42; background:#f6f7f9; border-color:#eceff3; }
+.fba-linha.fora .fba-prazo { color:var(--texto-suave); }
+.fba-nota { margin-top:10px; font-size:0.74rem; color:var(--texto-suave); line-height:1.4; }
+.fba-nota #fbaAviso { color:#8a5a00; font-weight:600; }
 
-button {
-    padding:12px 18px;
-    background:#003366;
-    color:white;
-    border:none;
-    border-radius:10px;
-    min-width:140px;
-    box-shadow:0 10px 24px rgba(0,0,0,0.08);
-    transition:transform .2s ease, background .2s ease;
-}
+/* Impacto no limite */
+.selo-periodo { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 8px; border-radius:999px; background:var(--azul-100); color:var(--azul-700); white-space:nowrap; }
+.impacto-total { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.impacto-total span { font-size:0.8rem; color:var(--texto-suave); font-weight:600; }
+.impacto-total strong { font-size:1.35rem; color:var(--azul-800); font-variant-numeric:tabular-nums; }
+.impacto-barra { display:flex; height:10px; border-radius:999px; overflow:hidden; margin:12px 0 14px; background:#e6ecf3; gap:2px; }
+.parte-fundo { background:var(--azul-800); }
+.parte-fidejussoria { background:var(--amarelo); }
+.impacto-item { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:10px; padding:7px 0; font-size:0.84rem; }
+.impacto-item + .impacto-item { border-top:1px solid #eef2f7; }
+.impacto-item .marcador { width:10px; height:10px; border-radius:3px; }
+.impacto-rotulo small { color:var(--texto-suave); font-size:0.72rem; margin-left:4px; }
+.impacto-valor { font-weight:700; font-variant-numeric:tabular-nums; color:var(--texto); }
+.impacto-vazio { margin-top:8px; font-size:0.75rem; color:var(--texto-suave); }
+.impacto.sem-valor .impacto-barra span { background:#d3dce7; }
+.impacto.sem-valor .impacto-total strong, .impacto.sem-valor .impacto-valor { color:#a3b0c0; }
+.impacto:not(.sem-valor) .impacto-vazio { display:none; }
 
-button:hover {
-    transform:translateY(-1px);
-    background:#002952;
-}
+/* ================= Barra de ações ================= */
+.acoes { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:20px 0 0; padding:14px 16px; }
+.acoes .espaco { flex:1; }
+button { font:inherit; cursor:pointer; }
+.btn { height:40px; padding:0 18px; border-radius:8px; border:1px solid transparent; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:8px; transition:background .15s ease, border-color .15s ease, transform .15s ease; }
+.btn-primario { background:var(--azul-800); color:#fff; }
+.btn-primario:hover { background:var(--azul-900); }
+.btn-secundario { background:var(--branco); color:var(--azul-800); border-color:#c6d3e3; }
+.btn-secundario:hover { background:var(--azul-50); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+.btn svg { width:16px; height:16px; }
 
-.filter-card { max-width:1080px; margin:20px auto 0; background:#fff; border:1px solid #dce3eb; border-radius:12px; padding:0; box-shadow:0 10px 24px rgba(0,0,0,0.05); }
-.filter-card summary { cursor:pointer; padding:14px 18px; color:#003366; font-weight:700; list-style:none; }
+/* Filtro do resumo */
+.filter-card { position:relative; }
+.filter-card summary { list-style:none; cursor:pointer; height:40px; padding:0 14px; border-radius:8px; border:1px solid #c6d3e3; background:var(--branco); color:var(--azul-800); font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:8px; }
 .filter-card summary::-webkit-details-marker { display:none; }
-.filter-card summary::after { content:"+"; float:right; font-size:1.1rem; }
-.filter-card[open] summary::after { content:"-"; }
-.filter-options { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px 14px; padding:0 18px 16px; }
-.filter-option { display:flex; align-items:center; gap:8px; color:#354156; font-size:0.9rem; width:auto; text-align:left; white-space:nowrap; }
-.filter-option input { width:16px; height:16px; margin:0; flex:0 0 auto; }
-.filter-actions { display:flex; gap:8px; padding:0 18px 16px; justify-content:space-between; align-items:center; }
-.filter-actions .filter-aviso { font-size:0.7rem; color:#5b6f89; margin-left:auto; white-space:nowrap; }
-button.filter-action { min-width:auto; padding:8px 12px; border-radius:8px; font-size:0.85rem; box-shadow:none; }
-@media (max-width: 760px) { .filter-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.filter-card summary::after { content:"▾"; font-size:0.8rem; }
+.filter-card[open] summary { background:var(--azul-50); }
+.filter-painel { position:absolute; right:0; top:46px; z-index:30; width:min(760px, 90vw); background:var(--branco); border:1px solid var(--borda); border-radius:var(--raio); box-shadow:0 14px 40px rgba(16,38,64,0.16); padding:14px; }
+.filter-options { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px 14px; }
+.filter-option { display:flex; align-items:center; gap:8px; font-size:0.85rem; color:#354156; cursor:pointer; }
+.filter-option input { width:15px; height:15px; margin:0; accent-color:var(--azul-800); }
+.filter-actions { display:flex; align-items:center; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--borda); }
+.filter-actions .filter-aviso { margin-left:auto; font-size:0.72rem; color:var(--texto-suave); }
+button.filter-action { height:30px; padding:0 10px; border-radius:6px; border:1px solid #c6d3e3; background:var(--branco); color:var(--azul-800); font-size:0.8rem; font-weight:600; }
+button.filter-action:hover { background:var(--azul-50); }
 
-#resumo { margin:24px auto 0; max-width:1080px; background:#fff; border:1px solid #dce3eb; border-radius:16px; padding:22px; box-shadow:0 14px 34px rgba(0,0,0,0.06); font-size:14px; }
-#resumo h3 { margin-top:0; margin-bottom:20px; color:#003366; font-size:1.2rem; }
-.resumo-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; }
-.resumo-grid.resumo-grid-linhas { grid-template-columns:1fr; }
-.resumo-row { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:14px; }
-.resumo-item { background:#f7faff; padding:12px 14px; border-radius:14px; border:1px solid #e3ecf6; display:flex; justify-content:space-between; align-items:center; gap:12px; min-width:0; }
+/* ================= Resultados ================= */
+.estado-vazio { margin-top:20px; padding:36px 20px; text-align:center; color:var(--texto-suave); border:1px dashed #c8d4e3; border-radius:var(--raio); background:rgba(255,255,255,0.6); }
+.estado-vazio strong { display:block; color:var(--azul-800); font-size:1rem; margin-bottom:4px; }
+
+#resumo { margin-top:20px; }
+#resumo:empty { display:none; }
+#resumo > p { margin:0; padding:14px 18px; background:#fdecee; border:1px solid #f3c4ca; border-radius:var(--raio); }
+#resumo h3 { margin:0 0 12px; font-size:1rem; color:var(--azul-800); }
+.resumo-grid.resumo-grid-linhas { display:grid; gap:10px; }
+.resumo-row { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
+.resumo-item { background:var(--branco); border:1px solid var(--borda); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:4px; min-width:0; box-shadow:var(--sombra); }
 .resumo-item span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.resumo-item span:first-child { color:#4b607e; font-size:0.88rem; line-height:1.4; }
-.resumo-item span:last-child { color:#102640; font-weight:700; text-align:right; font-size:0.95rem; }
+.resumo-item span:first-child { font-size:0.75rem; color:var(--texto-suave); font-weight:600; }
+.resumo-item span:last-child { font-size:1.05rem; font-weight:700; color:var(--texto); font-variant-numeric:tabular-nums; }
+.resumo-item[data-resumo-campo="totalLiquido"], .resumo-item[data-resumo-campo="cetMensal"] { border-color:#bcd2ec; background:var(--azul-50); }
+.resumo-item[data-resumo-campo="totalLiquido"] span:last-child, .resumo-item[data-resumo-campo="cetMensal"] span:last-child { color:var(--azul-800); }
+
+.tabela-card { margin-top:20px; overflow:hidden; }
+.table-wrap { overflow-x:auto; }
+.tabela-parcelas { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+.tabela-parcelas thead th { position:sticky; top:0; background:var(--azul-800); color:#fff; font-weight:600; font-size:0.78rem; letter-spacing:0.02em; padding:11px 14px; text-align:right; white-space:nowrap; }
+.tabela-parcelas thead th:nth-child(-n+2) { text-align:left; }
+.tabela-parcelas td { padding:9px 14px; border-bottom:1px solid #edf1f6; text-align:right; white-space:nowrap; }
+.tabela-parcelas td:nth-child(-n+2) { text-align:left; }
+.tabela-parcelas td:first-child { color:var(--texto-suave); font-weight:600; width:90px; }
+.tabela-parcelas td:nth-child(5) { font-weight:700; color:var(--azul-800); }
+.tabela-parcelas tbody tr:hover td { background:var(--azul-50); }
+.tabela-parcelas tbody tr.carencia-row td { background:#f5f9ff; }
+.tabela-parcelas tbody tr.carencia-row td:first-child::after { content:"carência"; margin-left:8px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--azul-700); background:var(--azul-100); padding:2px 6px; border-radius:999px; vertical-align:middle; }
+.tabela-card:has(#tabela:empty) { display:none; }
+
+#rodapeSimulacao { margin-top:20px; padding:16px 20px; font-size:0.8rem; color:#4b5d76; line-height:1.6; }
+#rodapeSimulacao:empty { display:none; }
+#rodapeSimulacao h3 { margin:14px 0 6px; font-size:0.85rem; color:var(--azul-800); }
+#rodapeSimulacao p { margin:0 0 4px; }
 
 .print-header, .print-footer { display:none; }
 
-table { border-collapse:collapse; width:100%; margin-top:20px; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 14px 34px rgba(0,0,0,0.04); font-size:13px; }
-th, td { border:1px solid #d7dbe1; padding:10px; text-align:center; }
-th { background:#003366; color:white; }
-tbody tr:nth-child(odd) { background:#fafbff; }
-tbody tr:hover { background:#eef3fb; }
+/* ================= Responsivo ================= */
+@media (max-width: 1100px) {
+    .layout-entrada { grid-template-columns:1fr; }
+    .coluna-lateral { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .topo { padding:12px 16px 12px 62px; }
+    .page-container { padding:16px 16px 40px; }
+    .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .resumo-row { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .coluna-lateral { grid-template-columns:1fr; }
+    .topo .chip { display:none; }
+}
+@media (max-width: 520px) {
+    .form-grid { grid-template-columns:1fr; }
+    .filter-options { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
 
-#rodapeSimulacao { max-width:1080px; margin:20px auto 0; padding:18px 20px; background:#fff; border:1px solid #dce3eb; border-radius:16px; color:#354156; line-height:1.5; box-shadow:0 14px 34px rgba(0,0,0,0.04); font-size:13px; }
-#rodapeSimulacao h3 { margin-top:0; color:#003366; }
+/* ================= Impressão ================= */
+@media print {
+    @page { size: A4 portrait; margin: 14mm; @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size:7pt; color:#102640; font-family:Arial, sans-serif; } }
+    body { background:#fff !important; color:#000 !important; font-family:Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .topo .trilha, .topo .chip, .layout-entrada, .acoes, .estado-vazio { display:none !important; }
+    .conteudo { margin:0 !important; }
+    .topo { position:static !important; background:none !important; border:none !important; padding:12mm 0 4mm !important; justify-content:center; backdrop-filter:none; }
+    .topo h1 { font-size:1.4rem; text-align:center; }
+    .page-container { max-width:180mm !important; padding:0 0 8mm !important; }
+    .print-header { display:flex !important; justify-content:space-between; position:fixed; top:0; left:0; right:0; padding:1mm 14mm 0.5mm; font-size:7pt; color:#102640; background:#fff; border-bottom:1px solid #dce3eb; z-index:9999; }
+    .print-footer { display:flex !important; position:fixed; bottom:0; left:0; right:0; padding:0.5mm 14mm 1mm; border-top:1px solid #dce3eb; background:#fff; }
+    .print-footer span { display:none !important; }
+    .card, .resumo-item { box-shadow:none !important; }
+    #resumo { margin:0 auto 6mm !important; }
+    .resumo-row { grid-template-columns:repeat(4, minmax(0, 1fr)) !important; gap:4px !important; }
+    .resumo-grid.resumo-grid-linhas { gap:4px !important; }
+    .resumo-item { padding:4px 6px !important; border-radius:6px !important; }
+    .resumo-item span:first-child { font-size:0.6rem !important; }
+    .resumo-item span:last-child { font-size:0.75rem !important; }
+    .tabela-card { overflow:visible !important; border:none !important; }
+    .table-wrap { overflow:visible !important; }
+    .tabela-parcelas { font-size:8.5pt !important; }
+    .tabela-parcelas thead th { position:static; background:#003366 !important; color:#fff !important; padding:5px 6px !important; }
+    .tabela-parcelas td { padding:4px 6px !important; border-bottom:1px solid #ccd !important; }
+    .tabela-parcelas tbody tr.carencia-row td { background:#e7f1ff !important; }
+    tr { page-break-inside:avoid; }
+    thead { display:table-header-group; }
+    #rodapeSimulacao { font-size:7.5pt !important; padding:4mm 6mm !important; page-break-inside:avoid; break-inside:avoid; }
+}
+
+/* ===== Comum às páginas v2 ===== */
+.inicio-linha { grid-column:1; }
+.field > label.switch { display:inline-flex; margin-bottom:0; }
+.titulo-impressao { display:none; }
+.nota-campos { margin:14px 0 0; font-size:0.76rem; color:var(--texto-suave); line-height:1.45; }
+.nota-campos + .nota-campos { margin-top:4px; }
+.entrada input[readonly] { background:#f3f6fa; color:#5b6f89; }
+.page-container:has(#tabela tr) .estado-vazio { display:none; }
+
+/* Regras FBA (tabelas laterais) */
+.fba-titulo-coluna { font-size:0.66rem; }
+.fba-nota-rodape { margin-top:8px; font-size:0.74rem; color:var(--texto-suave); font-style:italic; }
+
+/* Impacto no limite (linhas geradas pelo cálculo) */
+.impacto-tabela { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+.impacto-tabela td { padding:9px 2px; border-bottom:1px solid #eef2f7; }
+.impacto-tabela td:last-child { text-align:right; font-weight:700; color:var(--texto); white-space:nowrap; }
+.impacto-tabela tr:last-child td { border-bottom:none; border-top:1px solid var(--borda); padding-top:11px; font-weight:700; color:var(--azul-800); }
+.impacto-tabela tr:last-child td:last-child { font-size:1.05rem; }
+
+/* Prorrogação */
+.status-prorrog { margin-top:14px; padding:10px 12px; border-radius:8px; font-size:0.84rem; font-weight:700; background:#eef6fb; color:#1f3b5a; }
+.status-prorrog.ok { background:#e8f6ee; color:#1d6b3a; }
+.status-prorrog.erro { background:#fdecee; color:#b2202f; }
+.status-prorrog.aviso { background:#fff6e0; color:#8a5a00; }
+.prorrog-card .switch { height:auto; margin-top:12px; font-size:0.84rem; }
+.prorrog-card .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.acoes .switch { height:40px; font-weight:600; color:var(--azul-800); }
+.tabela-parcelas tbody tr.historico-row td { color:#6b7a90; background:#f3f5f8; }
+.tabela-parcelas tbody tr.prorrog-row td { background:#fff6e0; font-weight:700; }
+.tabela-parcelas tbody tr.substituida-row td { color:#9aa6b6; background:#f6f7f9; text-decoration:line-through; }
+.tabela-parcelas tbody tr.substituida-row td:first-child::after { display:none; }
+#operacaoOriginal { margin-top:28px; }
+#operacaoOriginal .resumo-original { padding:18px 20px; }
+#operacaoOriginal h3 { margin:0 0 12px; font-size:1rem; color:var(--azul-800); }
+#operacaoOriginal .nota-original { margin-top:10px; font-size:0.76rem; color:var(--texto-suave); }
+#operacaoOriginal .tabela-card { margin-top:14px; }
 
 @media print {
-    @page { size: A4 portrait; margin: 14mm 14mm 14mm 14mm; @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size:7pt; color:#102640; font-family:Arial, sans-serif; } }
-    body { margin:0; background:#fff !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .dados-card, .tabelas-laterais, .table-card, .filter-card, .button-row, label, input, select, button { display:none !important; }
-    .page-container { width:auto !important; max-width:100% !important; padding:0 !important; background:transparent !important; box-shadow:none !important; margin:0 auto !important; padding-top:12mm !important; padding-bottom:8mm !important; }
-    .print-header { display:flex !important; justify-content:space-between !important; align-items:center !important; position:fixed !important; top:0 !important; left:0 !important; right:0 !important; width:100% !important; box-sizing:border-box !important; padding:1mm 14mm 0.5mm !important; font-size:7pt !important; color:#102640 !important; background:#fff !important; border-bottom:1px solid #dce3eb !important; z-index:9999 !important; line-height:1.2 !important; }
-    .print-header-left, .print-header-right { display:inline-block !important; white-space:nowrap !important; }
-    .print-footer { display:flex !important; justify-content:space-between !important; align-items:center !important; position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; box-sizing:border-box !important; padding:0.5mm 14mm 1mm !important; font-size:7pt !important; color:#102640 !important; background:#fff !important; border-top:1px solid #dce3eb !important; z-index:9999 !important; font-family: Arial, sans-serif !important; line-height:1.2 !important; }
-    .print-footer span { display:none !important; }
-    h1, #resumo, table, #rodapeSimulacao, .resumo-grid, .resumo-row, .resumo-item, thead, tbody, tr, th, td { visibility:visible !important; }
-    table { display:table !important; }
-    .page-container { max-width:180mm !important; }
-    #resumo { margin:0 auto 10mm auto; padding:4mm 3mm; box-shadow:none !important; border:1px solid #dce3eb !important; max-width:172mm !important; font-size:8pt !important; }
-    .resumo-grid { grid-template-columns: repeat(var(--resumo-cols, 4), minmax(60px, 1fr)) !important; gap:4px !important; }
-    .resumo-grid.resumo-grid-linhas { grid-template-columns:1fr !important; }
-    .resumo-row { grid-template-columns: repeat(4, minmax(60px, 1fr)) !important; gap:4px !important; }
-    .resumo-item { padding:4px 5px !important; }
-    .resumo-item span:first-child { font-size:0.6rem !important; }
-    .resumo-item span:last-child { font-size:0.72rem !important; }
-    table { width:100% !important; max-width:172mm !important; margin:0 auto 12mm auto !important; border-collapse:collapse !important; table-layout:fixed !important; font-size:9pt !important; border-radius:0 !important; box-shadow:none !important; }
-    th, td { border:1px solid #000 !important; padding:5px !important; word-wrap:break-word; }
-    th, td { font-size:9pt !important; }
-    th { background:#003366 !important; color:#fff !important; }
-    tbody tr:nth-child(odd) { background:#fff !important; }
-    tbody tr:hover { background:transparent !important; }
-    .carencia-row td { background:#e7f1ff !important; }
-    tr { page-break-inside:avoid; page-break-after:auto; }
-    thead { display:table-header-group; }
-    tfoot { display:table-footer-group; }
-    #rodapeSimulacao { margin:0 auto; padding:4mm 6mm 0 6mm; box-shadow:none !important; border:1px solid #dce3eb !important; font-size:8pt; line-height:1.35; max-width:172mm !important; page-break-inside:avoid !important; break-inside:avoid !important; }
+    .titulo-impressao { display:block !important; text-align:center; margin:12mm 0 4mm; }
+    .titulo-impressao h1 { font-size:1.4rem !important; line-height:1.3; color:#003366; margin:0; letter-spacing:0.01em; }
+    .topo { display:none !important; }
+    .impacto-tabela { display:none !important; }
+    #operacaoOriginal { page-break-before:always; break-before:page; margin-top:0 !important; }
+    #operacaoOriginal .resumo-original { box-shadow:none !important; padding:4mm 3mm !important; }
+    .tabela-parcelas tbody tr.prorrog-row td { background:#fff6e0 !important; }
+    .tabela-parcelas tbody tr.historico-row td { background:#f3f5f8 !important; }
+    .tabela-parcelas tbody tr.substituida-row td { background:#f6f7f9 !important; }
 }
 </style>
+<script src="menu.js"></script>
 </head>
 
-<body>
+<body data-menu-ativo="SimuladorPRONAMPEHist.html">
 <div class="print-header">
     <span class="print-header-left">Data da simulação: <span id="printDate"></span></span>
     <span class="print-header-right">Não possui caráter de proposta financeira</span>
 </div>
 <div class="print-footer"><span></span></div>
+
+<div class="conteudo">
+
+<header class="topo">
+    <div>
+        <div class="trilha">Histórico › Linha Governo</div>
+        <h1>PRONAMPE / PROCRED</h1>
+    </div>
+    <span class="chip">Conferência de operação contratada</span>
+</header>
+
 <div class="page-container">
+<div class="titulo-impressao"><h1 id="tituloSimulacao">Simulação BB Capital de Giro - PRONAMPE - Histórico</h1></div>
 
-<h1 id="tituloSimulacao">Simulação BB Capital de Giro - PRONAMPE - Histórico</h1>
-
-<div class="dados-e-tabelas">
-<section class="dados-card">
-    <h2 class="card-title">Dados da Operação</h2>
-    <div class="form-grid">
-
-    <div class="field">
-        <label for="valor">Valor (R$)</label>
-        <input id="valor" type="text" inputmode="decimal" value="150.000,00">
+<div class="layout-entrada">
+<section class="card dados-card">
+    <div class="card-cabecalho"><h2>Dados da Operação</h2></div>
+    <div class="card-corpo">
+<div class="grupo-campos">
+<p class="grupo-titulo">Operação</p>
+<div class="form-grid">
+<div class="field">
+    <label for="valor">Valor</label>
+    <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="valor" type="text" inputmode="decimal" data-mascara="moeda" value="150.000,00"></div>
+</div>
+<div class="field">
+    <label for="dataLiberacao">Data de liberação*</label>
+    <div class="entrada"><input id="dataLiberacao" type="date"></div>
+</div>
+<div class="field">
+    <label for="dataBase">Data base</label>
+    <div class="entrada com-sufixo"><input id="dataBase" type="number" min="1" max="31"><span class="sufixo">dia</span></div>
+</div>
+<div class="field">
+    <label for="carencia">Carência</label>
+    <div class="entrada com-sufixo"><input id="carencia" type="number" min="0" value="6"><span class="sufixo">meses</span></div>
+</div>
+<div class="field">
+    <label for="prazo">Prazo total</label>
+    <div class="entrada com-sufixo"><input id="prazo" type="number" min="1" value="48"><span class="sufixo">meses</span></div>
+</div>
+</div>
+</div>
+<div class="grupo-campos">
+<p class="grupo-titulo">Taxa</p>
+<div class="form-grid">
+<div id="taxasCdiContainer" class="field">
+    <label for="cdi">TMS atual</label>
+    <div class="entrada com-sufixo"><input id="cdi" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="13.90"><span class="sufixo">% a.a.</span></div>
+</div>
+<div id="sobretaxaContainer" class="field">
+    <label for="st">Sobretaxa</label>
+    <div class="entrada com-sufixo"><input id="st" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="6.00"><span class="sufixo">% a.a.</span></div>
+</div>
+<div id="jurosCarenciaContainer" class="field">
+    <label for="jurosCarencia">Juros na carência?</label>
+    <div class="entrada"><select id="jurosCarencia"><option value="SIM">SIM</option><option value="NAO" selected>NÃO</option></select></div>
+</div>
+</div>
+</div>
+<div class="grupo-campos">
+<p class="grupo-titulo">Despesas e garantias</p>
+<div class="form-grid">
+<div id="seguroContainer" class="field">
+    <label for="seguro">Seguro prestamista</label>
+    <label class="switch" for="seguro"><input type="checkbox" id="seguro" role="switch" checked><span class="trilho"></span><span>Contratar</span></label>
+</div>
+<div id="sociosContainer" class="field">
+    <label for="socios">Sócios</label>
+    <div class="entrada"><input id="socios" type="number" min="1" value="1"></div>
+</div>
+<div id="iofDiarioContainer" class="field inicio-linha">
+    <label for="iofDiario">IOF diário</label>
+    <div class="entrada com-sufixo"><input id="iofDiario" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="0.0082"><span class="sufixo">%</span></div>
+</div>
+<div id="iofAdicionalContainer" class="field">
+    <label for="iofAdicional">IOF adicional</label>
+    <div class="entrada com-sufixo"><input id="iofAdicional" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="0.38"><span class="sufixo">%</span></div>
+</div>
+</div>
+</div>
+<p class="nota-campos">*A data de liberação é a mesma da cobrança do IOF no extrato da operação.</p>
     </div>
-
-    <div class="field">
-        <label for="dataLiberacao">Data Liberação*</label>
-        <input id="dataLiberacao" type="date">
-    </div>
-
-    <div class="field">
-        <label for="dataBase">Data Base</label>
-        <input id="dataBase" type="number" min="1" max="31">
-    </div>
-
-    <div class="field">
-        <label for="carencia">Carência</label>
-        <input id="carencia" type="number" value="6" min="0">
-    </div>
-
-    <div class="field">
-        <label for="prazo">Prazo Total</label>
-        <input id="prazo" type="number" value="48" min="1">
-    </div>
-
-    <div id="taxasCdiContainer" class="field">
-         <label for="cdi">TMS Atual (%)</label>
-         <input id="cdi" type="number" step="0.0001" value="13.90">
-    </div>
-
-     <div id="sobretaxaContainer" class="field">
-         <label for="st">Sobretaxa (%)</label>
-         <input id="st" type="number" step="0.0001" value="6.00">
-    </div>
-
-    <div id="jurosCarenciaContainer" class="field">
-        <label for="jurosCarencia">Juros na carência?</label>
-        <select id="jurosCarencia">
-            <option value="SIM">SIM</option>
-            <option value="NAO" selected>NÃO</option>
-        </select>
-    </div>
-
-    <div id="seguroContainer" class="field">
-        <label for="seguro">Seguro</label>
-        <input type="checkbox" id="seguro" checked>
-    </div>
-
-    <div id="sociosContainer" class="field">
-        <label for="socios">Sócios</label>
-        <input id="socios" type="number" min="1" value="1">
-    </div>
-
-    <div id="iofDiarioContainer" class="field">
-        <label for="iofDiario">IOF Diário (%)</label>
-        <input id="iofDiario" type="number" value="0.0082" step="0.0001" min="0">
-    </div>
-
-    <div id="iofAdicionalContainer" class="field">
-        <label for="iofAdicional">IOF Adicional (%)</label>
-        <input id="iofAdicional" type="number" value="0.38" step="0.0001" min="0">
-    </div>
-
-    </div>
-    <div class="data-note">*A data de liberação é a mesma da cobrança do IOF no extrato da operação</div>
 </section>
 
-<div class="tabelas-laterais">
-    <section class="table-card">
-        <h2 class="card-title">Regras FBA Último Exercício</h2>
-        <table class="mini-table">
-            <thead>
-                <tr><th>FBA</th><th>CARÊNCIA</th><th>PARCELAS</th><th>TOTAL</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>< 360k</td><td>6*</td><td>30</td><td>36</td></tr>
-                <tr><td>360k - 1,0M</td><td>6</td><td>30</td><td>36</td></tr>
-                <tr><td>1,0M - 4,8M</td><td>6</td><td>42</td><td>48</td></tr>
-            </tbody>
-        </table>
-        <div style="margin-top:10px; text-align:right; font-size:0.8rem; color:#4b5968; font-style:italic;">*Carência apenas de capital</div>
-    </section>
-    <section class="table-card">
-        <h2 class="card-title">Impacto Limite Cliente</h2>
-        <table class="mini-table">
-            <tbody id="impactoLimiteCliente">
-                <tr><td>Fundo de Aval Longo Prazo</td><td>-</td></tr>
-                <tr><td>Total Longo Prazo</td><td>-</td></tr>
-            </tbody>
-        </table>
-    </section>
-        <table class="mini-table">
-            <tbody>
-                <tr><td>Desenvolvido por F3421879 - Guerreiro</td><td>v1.0</td></tr>
-            </tbody>
-        </table>
+<div class="coluna-lateral">
+<section class="card table-card">
+    <div class="card-cabecalho"><div><h2>Regras por FBA</h2><div class="card-subtitulo">Faturamento bruto do último exercício</div></div></div>
+    <div class="card-corpo card-corpo-compacto">
+        <div class="fba-tabela" role="table">
+            <div class="fba-linha fba-cabecalho" role="row"><span role="columnheader">FBA</span><span role="columnheader">Carência</span><span role="columnheader">Parcelas</span><span role="columnheader">Prazo</span></div>
+            <div class="fba-linha" role="row"><span class="fba-faixa" role="cell">&lt; R$ 360 mil</span><span role="cell">6*</span><span role="cell">30</span><span class="fba-prazo" role="cell">36</span></div><div class="fba-linha" role="row"><span class="fba-faixa" role="cell">R$ 360 mil a 1 mi</span><span role="cell">6</span><span role="cell">30</span><span class="fba-prazo" role="cell">36</span></div><div class="fba-linha" role="row"><span class="fba-faixa" role="cell">R$ 1 a 4,8 mi</span><span role="cell">6</span><span role="cell">42</span><span class="fba-prazo" role="cell">48</span></div>
+        </div>
+        <div class="fba-nota">Valores em meses. *Carência apenas de capital.</div>
+    </div>
+</section>
+<section class="card table-card">
+    <div class="card-cabecalho"><h2>Impacto no limite</h2></div>
+    <div class="card-corpo">
+        <table class="impacto-tabela"><tbody id="impactoLimiteCliente"><tr><td>Fundo de Aval Longo Prazo</td><td>-</td></tr><tr><td>Total Longo Prazo</td><td>-</td></tr></tbody></table>
+    </div>
+</section>
 </div>
 </div>
 
-<details id="filtroCamposResumo" class="filter-card">
-    <summary>Filtrar Campos</summary>
-    <div class="filter-options">
+<div class="card acoes">
+    <button id="btnCalcular" class="btn btn-primario" onclick="calcular()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>
+        Calcular
+    </button>
+    <button id="btnPrint" class="btn btn-secundario" onclick="window.print()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+        Imprimir
+    </button>
+    <span class="espaco"></span>
+    
+    <details id="filtroCamposResumo" class="filter-card">
+        <summary>Campos do resumo</summary>
+        <div class="filter-painel">
+            <div class="filter-options">
         <label class="filter-option"><input type="checkbox" data-resumo-campo="valor" checked>Valor</label>
         <label class="filter-option"><input type="checkbox" data-resumo-campo="taxaMensal" checked>Taxa Mensal</label>
         <label class="filter-option"><input type="checkbox" data-resumo-campo="liberacao" checked>Liberação</label>
@@ -320,31 +440,34 @@ tbody tr:hover { background:#eef3fb; }
         <label class="filter-option"><input type="checkbox" data-resumo-campo="totalPagar" checked>Total Pagar</label>
         <label class="filter-option"><input type="checkbox" data-resumo-campo="totalLiquido" checked>Total Líq.</label>
     </div>
-    <div class="filter-actions">
-        <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(true)">Todos</button>
-        <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(false)">Limpar</button>
-        <span class="filter-aviso">Deixe selecionado apenas os campos que deseja manter <strong>visível</strong> no Resumo</span>
-    </div>
-</details>
+            <div class="filter-actions">
+                <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(true)">Todos</button>
+                <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(false)">Limpar</button>
+                <span class="filter-aviso">Marque os campos que devem aparecer no resumo e na impressão</span>
+            </div>
+        </div>
+    </details>
+</div>
 
-<div class="button-row">
-    <button id="btnCalcular" onclick="calcular()">Calcular</button>
-    <button id="btnPrint" onclick="window.print()">Imprimir</button>
-    <button id="btnVoltar" onclick="voltar()">Voltar</button>
+<div id="estadoVazio" class="estado-vazio">
+    <strong>Nenhuma simulação ainda</strong>
+    Preencha os dados da operação e clique em <b>Calcular</b> para ver o resumo e o cronograma de parcelas.
 </div>
 
 <div id="resumo"></div>
 
-<table>
-<thead>
-<tr>
-<th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th id="parcelaHeader">Parcela</th><th>Saldo Devedor</th>
-</tr>
-</thead>
-<tbody id="tabela"></tbody>
-</table>
+<section class="card tabela-card">
+    <div class="table-wrap">
+        <table class="tabela-parcelas">
+            <thead><tr><th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th id="parcelaHeader">Parcela</th><th>Saldo Devedor</th></tr></thead>
+            <tbody id="tabela"></tbody>
+        </table>
+    </div>
+</section>
 
-<div id="rodapeSimulacao"></div>
+<div id="rodapeSimulacao" class="card"></div>
+
+</div>
 </div>
 
 <script>
@@ -898,7 +1021,7 @@ function atualizarSocios(){
 }
 
 function voltar(){
-    window.location.href = './';
+    window.location.href = './index.html';
 }
 
 function bindResultsResetListeners(){
@@ -927,6 +1050,154 @@ window.onbeforeprint = atualizarCabecalhoImpressao;
 if(btnPrint) btnPrint.disabled = true;
 atualizarSocios();
 
+</script>
+
+<script>
+/* =====================================================================
+   CAMADA DE INTERFACE (v2) — não altera nenhum cálculo.
+   - Campos com data-mascara="moeda": exibem e entregam o valor em formato
+     brasileiro (como o script original já lê, via parseValor).
+   - Campos com data-mascara="moeda-num" ou "decimal-num": exibem em formato
+     brasileiro, mas o script original continua recebendo o mesmo texto de
+     antes (ponto decimal), pois o .value desses campos é traduzido.
+   ===================================================================== */
+(function(){
+    const nativo = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    const lerTela = campo => nativo.get.call(campo);
+    const gravarTela = (campo, texto) => nativo.set.call(campo, texto);
+
+    function casasDe(campo){
+        return campo.dataset.mascara.startsWith("moeda") ? 2 : parseInt(campo.dataset.casas || "4", 10);
+    }
+    function agrupar(inteiro){
+        return inteiro.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    function formatarDigitado(texto, casas){
+        texto = texto.replace(/[^\d,]/g, "");
+        const pos = texto.indexOf(",");
+        let inteiro = pos >= 0 ? texto.slice(0, pos) : texto;
+        const decimal = pos >= 0 ? texto.slice(pos + 1).replace(/,/g, "").slice(0, casas) : null;
+        inteiro = agrupar(inteiro);
+        if(inteiro === "" && decimal !== null) inteiro = "0";
+        return decimal !== null ? `${inteiro},${decimal}` : inteiro;
+    }
+    function lerNumeroTela(campo){
+        const t = lerTela(campo).trim();
+        if(t === "") return NaN;
+        return parseFloat(t.replace(/\./g, "").replace(",", "."));
+    }
+    // valor no formato do script (ponto decimal) -> texto exibido
+    function paraTela(campo, valor){
+        if(valor === null || valor === undefined) return "";
+        const s = String(valor).trim();
+        if(s === "" || isNaN(Number(s))) return s;
+        if(campo.dataset.mascara === "moeda-num"){
+            return Number(s).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+        }
+        const negativo = s.startsWith("-");
+        const [inteiro, decimal] = s.replace("-", "").split(".");
+        return (negativo ? "-" : "") + agrupar(inteiro) + (decimal !== undefined ? "," + decimal : "");
+    }
+    // texto exibido -> formato que o script original sempre recebeu
+    function paraScript(campo){
+        const t = lerTela(campo).trim();
+        return t === "" ? "" : t.replace(/\./g, "").replace(",", ".");
+    }
+
+    document.querySelectorAll('input[data-mascara$="-num"]').forEach(campo => {
+        const atual = lerTela(campo);
+        Object.defineProperty(campo, "value", {
+            configurable: true,
+            get(){ return paraScript(campo); },
+            set(v){ gravarTela(campo, paraTela(campo, v)); }
+        });
+        gravarTela(campo, paraTela(campo, atual));
+    });
+
+    function aplicarMascara(campo, evento){
+        const casas = casasDe(campo);
+        let original = lerTela(campo);
+        const cursor = campo.selectionStart ?? original.length;
+        if(evento && evento.data === "." && cursor > 0 && original[cursor - 1] === "."){
+            original = original.slice(0, cursor - 1) + "," + original.slice(cursor);
+        }
+        const relevantesAntes = original.slice(0, cursor).replace(/[^\d,]/g, "").length;
+        const formatado = formatarDigitado(original, casas);
+        if(formatado === lerTela(campo)) return;
+        gravarTela(campo, formatado);
+        let pos = 0, contados = 0;
+        while(pos < formatado.length && contados < relevantesAntes){
+            if(/[\d,]/.test(formatado[pos])) contados++;
+            pos++;
+        }
+        campo.setSelectionRange(pos, pos);
+    }
+
+    function completarMoeda(campo){
+        if(!campo.dataset.mascara || !campo.dataset.mascara.startsWith("moeda")) return;
+        const n = lerNumeroTela(campo);
+        if(isNaN(n)) return;
+        gravarTela(campo, n.toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 }));
+    }
+
+    // Ao clicar, o campo é limpo para nova digitação; o valor anterior fica como dica
+    // e volta se o campo for deixado em branco.
+    document.querySelectorAll(".dados-card input").forEach(campo => {
+        if(campo.type === "checkbox" || campo.type === "date") return;
+        campo.addEventListener("focus", () => {
+            if(campo.readOnly || campo.disabled) return;
+            campo.dataset.anterior = lerTela(campo);
+            campo.dataset.placeholderOriginal = campo.getAttribute("placeholder") || "";
+            campo.setAttribute("placeholder", lerTela(campo) || campo.dataset.placeholderOriginal);
+            gravarTela(campo, "");
+        });
+        campo.addEventListener("blur", () => {
+            if(campo.dataset.anterior === undefined) return;
+            if(lerTela(campo).trim() === "") gravarTela(campo, campo.dataset.anterior);
+            completarMoeda(campo);
+            campo.setAttribute("placeholder", campo.dataset.placeholderOriginal || "");
+            delete campo.dataset.anterior;
+        });
+        if(campo.dataset.mascara){
+            campo.addEventListener("input", evento => aplicarMascara(campo, evento));
+        }
+    });
+
+    // Fecha o painel "Campos do resumo" ao clicar fora dele
+    document.addEventListener("click", evento => {
+        const filtro = document.getElementById("filtroCamposResumo");
+        if(filtro && filtro.open && !filtro.contains(evento.target)) filtro.open = false;
+    });
+
+    // Regras FBA: esmaece faixas que não comportam o prazo/carência informados
+    const linhasFba = document.querySelectorAll(".fba-linha[data-prazo-max]");
+    const campoPrazo = document.getElementById("prazo");
+    const campoCarencia = document.getElementById("carencia");
+    const aviso = document.getElementById("fbaAviso");
+    function atualizarRegrasFba(){
+        const prazo = parseInt(lerTela(campoPrazo), 10);
+        const carencia = parseInt(lerTela(campoCarencia), 10);
+        let todasFora = true, algumaFora = false;
+        linhasFba.forEach(linha => {
+            const prazoOk = isNaN(prazo) || prazo <= Number(linha.dataset.prazoMax);
+            const carenciaOk = isNaN(carencia) || (carencia >= Number(linha.dataset.carenciaMin) && carencia <= Number(linha.dataset.carenciaMax));
+            const dentro = prazoOk && carenciaOk;
+            linha.classList.toggle("fora", !dentro);
+            if(dentro) todasFora = false; else algumaFora = true;
+        });
+        if(aviso){
+            aviso.textContent = todasFora ? "Prazo/carência informados não se enquadram em nenhuma faixa."
+                : (algumaFora ? "Faixas esmaecidas não comportam o prazo/carência informados." : "");
+        }
+    }
+    if(linhasFba.length && campoPrazo && campoCarencia){
+        ["input", "blur"].forEach(ev => {
+            campoPrazo.addEventListener(ev, atualizarRegrasFba);
+            campoCarencia.addEventListener(ev, atualizarRegrasFba);
+        });
+        atualizarRegrasFba();
+    }
+})();
 </script>
 
 </body>
