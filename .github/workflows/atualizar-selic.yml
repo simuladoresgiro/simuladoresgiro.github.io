@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Baixar o repositório
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Verificar a Meta Selic e atualizar os arquivos
         shell: pwsh
