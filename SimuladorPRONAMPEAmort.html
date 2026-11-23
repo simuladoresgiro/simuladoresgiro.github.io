@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRONAMPE / PROCRED · Amortizações</title>
+<style>
+/* ================= Tokens ================= */
+:root {
+    --azul-900:#002244;
+    --azul-800:#003366;
+    --azul-700:#0a4a85;
+    --azul-100:#e8f0fa;
+    --azul-50:#f4f8fd;
+    --amarelo:#fcd116;
+    --texto:#1b2c42;
+    --texto-suave:#5b6f89;
+    --borda:#dde5ef;
+    --fundo:#f2f5f9;
+    --branco:#fff;
+    --erro:#b2202f;
+    --sucesso:#1d6b3a;
+    --raio:12px;
+    --sombra:0 1px 2px rgba(16,38,64,0.06), 0 6px 18px rgba(16,38,64,0.05);
+}
+
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body {
+    font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background:var(--fundo);
+    color:var(--texto);
+    font-size:14px;
+    line-height:1.45;
+}
+
+/* ================= Conteúdo ================= */
+.conteudo { min-height:100vh; }
+.topo {
+    position:sticky; top:0; z-index:20; background:rgba(242,245,249,0.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--borda); padding:14px 32px; display:flex; align-items:center; gap:14px;
+}
+.topo .trilha { font-size:0.78rem; color:var(--texto-suave); }
+.topo h1 { margin:2px 0 0; font-size:1.35rem; color:var(--azul-800); letter-spacing:0.01em; }
+.topo .chip { margin-left:auto; font-size:0.75rem; color:var(--texto-suave); background:var(--branco); border:1px solid var(--borda); padding:6px 10px; border-radius:999px; white-space:nowrap; }
+
+.page-container { max-width:1180px; margin:0 auto; padding:24px 32px 48px; }
+
+/* ================= Cards ================= */
+.card { background:var(--branco); border:1px solid var(--borda); border-radius:var(--raio); box-shadow:var(--sombra); }
+.card-cabecalho { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--borda); }
+.card-cabecalho h2 { margin:0; font-size:1rem; color:var(--azul-800); }
+.card-corpo { padding:18px 20px 20px; }
+
+.layout-entrada { display:grid; grid-template-columns:minmax(0, 1fr) 340px; gap:20px; align-items:start; }
+.coluna-lateral { display:grid; gap:20px; }
+
+/* ================= Formulário ================= */
+.grupo-campos + .grupo-campos { margin-top:18px; padding-top:18px; border-top:1px dashed var(--borda); }
+.grupo-titulo { font-size:0.72rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--texto-suave); margin:0 0 12px; }
+.form-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px 18px; }
+/* Despesas e garantias: Seguro/Sócios | Desconto ECG/IOF diário/IOF adicional | TAC/TAC manual */
+#descontoEcgContainer, #tipoTacContainer { grid-column:1; }
+
+.field { display:flex; flex-direction:column; gap:0; min-width:0; }
+.field > label { display:block; margin-bottom:6px; font-size:0.82rem; font-weight:600; color:#3c4f69; }
+
+.entrada { position:relative; display:flex; align-items:center; }
+.entrada input, .entrada select, .field > select {
+    width:100%; height:40px; padding:0 12px; border:1px solid #cdd8e5; border-radius:8px;
+    background:var(--branco); color:var(--texto); font:inherit; font-size:0.92rem;
+    transition:border-color .15s ease, box-shadow .15s ease;
+}
+.entrada input:focus, .entrada select:focus, .field > select:focus { outline:none; border-color:var(--azul-700); box-shadow:0 0 0 3px rgba(10,74,133,0.15); }
+.entrada input:disabled { background:#f3f6fa; color:#8a99ad; }
+.entrada .prefixo, .entrada .sufixo { position:absolute; font-size:0.8rem; color:var(--texto-suave); pointer-events:none; }
+.entrada .prefixo { left:12px; }
+.entrada .sufixo { right:12px; }
+.entrada.com-prefixo input { padding-left:36px; }
+.entrada.com-sufixo input { padding-right:52px; }
+.entrada input[type="number"] { -moz-appearance:textfield; }
+.entrada input[type="number"]::-webkit-inner-spin-button, .entrada input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+/* Switch (checkbox estilizado) */
+.field > label.switch { font-size:0.88rem; font-weight:400; color:var(--texto); }
+.switch { display:inline-flex; align-items:center; gap:10px; height:40px; cursor:pointer; user-select:none; font-size:0.88rem; color:var(--texto); }
+.switch input { position:absolute; opacity:0; width:0; height:0; }
+.switch .trilho { position:relative; width:42px; height:24px; border-radius:999px; background:#c3ccd8; transition:background .2s ease; flex:0 0 auto; }
+.switch .trilho::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .2s ease; }
+.switch input:checked + .trilho { background:var(--azul-800); }
+.switch input:checked + .trilho::after { transform:translateX(18px); }
+.switch input:focus-visible + .trilho { outline:2px solid var(--azul-700); outline-offset:2px; }
+
+/* ================= Tabelas laterais ================= */
+.mini-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+.mini-table th { text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--texto-suave); font-weight:700; padding:0 8px 8px; border-bottom:1px solid var(--borda); }
+.mini-table td { padding:9px 8px; border-bottom:1px solid #eef2f7; }
+.mini-table tr:last-child td { border-bottom:none; }
+.mini-table td:not(:first-child), .mini-table th:not(:first-child) { text-align:right; }
+.card-subtitulo { font-size:0.75rem; color:var(--texto-suave); margin-top:2px; }
+.card-corpo-compacto { padding:12px 14px 14px; }
+
+/* Regras por FBA */
+.fba-tabela { display:grid; gap:4px; }
+.fba-linha { display:grid; grid-template-columns:minmax(0, 1.4fr) 0.9fr 1fr 0.7fr; white-space:nowrap; align-items:center; gap:6px; padding:9px 10px; border-radius:8px; font-size:0.84rem; font-variant-numeric:tabular-nums; transition:opacity .2s ease, background .2s ease; }
+.fba-linha > span:not(:first-child) { text-align:center; }
+.fba-linha:not(.fba-cabecalho) { background:var(--azul-50); border:1px solid #e3ecf6; }
+.fba-cabecalho { padding:0 10px 4px; font-size:0.66rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--texto-suave); }
+.fba-faixa { font-weight:600; color:var(--texto); }
+.fba-prazo { font-weight:700; color:var(--azul-800); }
+.fba-linha.fora { opacity:0.42; background:#f6f7f9; border-color:#eceff3; }
+.fba-linha.fora .fba-prazo { color:var(--texto-suave); }
+.fba-nota { margin-top:10px; font-size:0.74rem; color:var(--texto-suave); line-height:1.4; }
+.fba-nota #fbaAviso { color:#8a5a00; font-weight:600; }
+
+/* Impacto no limite */
+.selo-periodo { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 8px; border-radius:999px; background:var(--azul-100); color:var(--azul-700); white-space:nowrap; }
+.impacto-total { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.impacto-total span { font-size:0.8rem; color:var(--texto-suave); font-weight:600; }
+.impacto-total strong { font-size:1.35rem; color:var(--azul-800); font-variant-numeric:tabular-nums; }
+.impacto-barra { display:flex; height:10px; border-radius:999px; overflow:hidden; margin:12px 0 14px; background:#e6ecf3; gap:2px; }
+.parte-fundo { background:var(--azul-800); }
+.parte-fidejussoria { background:var(--amarelo); }
+.impacto-item { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:10px; padding:7px 0; font-size:0.84rem; }
+.impacto-item + .impacto-item { border-top:1px solid #eef2f7; }
+.impacto-item .marcador { width:10px; height:10px; border-radius:3px; }
+.impacto-rotulo small { color:var(--texto-suave); font-size:0.72rem; margin-left:4px; }
+.impacto-valor { font-weight:700; font-variant-numeric:tabular-nums; color:var(--texto); }
+.impacto-vazio { margin-top:8px; font-size:0.75rem; color:var(--texto-suave); }
+.impacto.sem-valor .impacto-barra span { background:#d3dce7; }
+.impacto.sem-valor .impacto-total strong, .impacto.sem-valor .impacto-valor { color:#a3b0c0; }
+.impacto:not(.sem-valor) .impacto-vazio { display:none; }
+
+/* ================= Barra de ações ================= */
+.acoes { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:20px 0 0; padding:14px 16px; }
+.acoes .espaco { flex:1; }
+button { font:inherit; cursor:pointer; }
+.btn { height:40px; padding:0 18px; border-radius:8px; border:1px solid transparent; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:8px; transition:background .15s ease, border-color .15s ease, transform .15s ease; }
+.btn-primario { background:var(--azul-800); color:#fff; }
+.btn-primario:hover { background:var(--azul-900); }
+.btn-secundario { background:var(--branco); color:var(--azul-800); border-color:#c6d3e3; }
+.btn-secundario:hover { background:var(--azul-50); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+.btn svg { width:16px; height:16px; }
+
+/* Filtro do resumo */
+.filter-card { position:relative; }
+.filter-card summary { list-style:none; cursor:pointer; height:40px; padding:0 14px; border-radius:8px; border:1px solid #c6d3e3; background:var(--branco); color:var(--azul-800); font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:8px; }
+.filter-card summary::-webkit-details-marker { display:none; }
+.filter-card summary::after { content:"▾"; font-size:0.8rem; }
+.filter-card[open] summary { background:var(--azul-50); }
+.filter-painel { position:absolute; right:0; top:46px; z-index:30; width:min(760px, 90vw); background:var(--branco); border:1px solid var(--borda); border-radius:var(--raio); box-shadow:0 14px 40px rgba(16,38,64,0.16); padding:14px; }
+.filter-options { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px 14px; }
+.filter-option { display:flex; align-items:center; gap:8px; font-size:0.85rem; color:#354156; cursor:pointer; }
+.filter-option input { width:15px; height:15px; margin:0; accent-color:var(--azul-800); }
+.filter-actions { display:flex; align-items:center; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--borda); }
+.filter-actions .filter-aviso { margin-left:auto; font-size:0.72rem; color:var(--texto-suave); }
+button.filter-action { height:30px; padding:0 10px; border-radius:6px; border:1px solid #c6d3e3; background:var(--branco); color:var(--azul-800); font-size:0.8rem; font-weight:600; }
+button.filter-action:hover { background:var(--azul-50); }
+
+/* ================= Resultados ================= */
+.estado-vazio { margin-top:20px; padding:36px 20px; text-align:center; color:var(--texto-suave); border:1px dashed #c8d4e3; border-radius:var(--raio); background:rgba(255,255,255,0.6); }
+.estado-vazio strong { display:block; color:var(--azul-800); font-size:1rem; margin-bottom:4px; }
+
+#resumo { margin-top:20px; }
+#resumo:empty { display:none; }
+#resumo > p { margin:0; padding:14px 18px; background:#fdecee; border:1px solid #f3c4ca; border-radius:var(--raio); }
+#resumo h3 { margin:0 0 12px; font-size:1rem; color:var(--azul-800); }
+.resumo-grid.resumo-grid-linhas { display:grid; gap:10px; }
+.resumo-row { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
+.resumo-item { background:var(--branco); border:1px solid var(--borda); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:4px; min-width:0; box-shadow:var(--sombra); }
+.resumo-item span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.resumo-item span:first-child { font-size:0.75rem; color:var(--texto-suave); font-weight:600; }
+.resumo-item span:last-child { font-size:1.05rem; font-weight:700; color:var(--texto); font-variant-numeric:tabular-nums; }
+.resumo-item[data-resumo-campo="totalLiquido"], .resumo-item[data-resumo-campo="cetMensal"] { border-color:#bcd2ec; background:var(--azul-50); }
+.resumo-item[data-resumo-campo="totalLiquido"] span:last-child, .resumo-item[data-resumo-campo="cetMensal"] span:last-child { color:var(--azul-800); }
+
+.tabela-card { margin-top:20px; overflow:hidden; }
+.table-wrap { overflow-x:auto; }
+.tabela-parcelas { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+.tabela-parcelas thead th { position:sticky; top:0; background:var(--azul-800); color:#fff; font-weight:600; font-size:0.78rem; letter-spacing:0.02em; padding:11px 14px; text-align:right; white-space:nowrap; }
+.tabela-parcelas thead th:nth-child(-n+2) { text-align:left; }
+.tabela-parcelas td { padding:9px 14px; border-bottom:1px solid #edf1f6; text-align:right; white-space:nowrap; }
+.tabela-parcelas td:nth-child(-n+2) { text-align:left; }
+.tabela-parcelas td:first-child { color:var(--texto-suave); font-weight:600; width:90px; }
+.tabela-parcelas td:nth-child(5) { font-weight:700; color:var(--azul-800); }
+.tabela-parcelas tbody tr:hover td { background:var(--azul-50); }
+.tabela-parcelas tbody tr.carencia-row td { background:#f5f9ff; }
+.tabela-parcelas tbody tr.carencia-row td:first-child::after { content:"carência"; margin-left:8px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--azul-700); background:var(--azul-100); padding:2px 6px; border-radius:999px; vertical-align:middle; }
+.tabela-card:has(#tabela:empty) { display:none; }
+
+#rodapeSimulacao { margin-top:20px; padding:16px 20px; font-size:0.8rem; color:#4b5d76; line-height:1.6; }
+#rodapeSimulacao:empty { display:none; }
+#rodapeSimulacao h3 { margin:14px 0 6px; font-size:0.85rem; color:var(--azul-800); }
+#rodapeSimulacao p { margin:0 0 4px; }
+
+.print-header, .print-footer { display:none; }
+
+/* ================= Responsivo ================= */
+@media (max-width: 1100px) {
+    .layout-entrada { grid-template-columns:1fr; }
+    .coluna-lateral { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .topo { padding:12px 16px 12px 62px; }
+    .page-container { padding:16px 16px 40px; }
+    .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .resumo-row { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .coluna-lateral { grid-template-columns:1fr; }
+    .topo .chip { display:none; }
+}
+@media (max-width: 520px) {
+    .form-grid { grid-template-columns:1fr; }
+    .filter-options { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+/* ================= Impressão ================= */
+@media print {
+    @page { size: A4 portrait; margin: 14mm; @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size:7pt; color:#102640; font-family:Arial, sans-serif; } }
+    body { background:#fff !important; color:#000 !important; font-family:Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .topo .trilha, .topo .chip, .layout-entrada, .acoes, .estado-vazio { display:none !important; }
+    .conteudo { margin:0 !important; }
+    .topo { position:static !important; background:none !important; border:none !important; padding:12mm 0 4mm !important; justify-content:center; backdrop-filter:none; }
+    .topo h1 { font-size:1.4rem; text-align:center; }
+    .page-container { max-width:180mm !important; padding:0 0 8mm !important; }
+    .print-header { display:flex !important; justify-content:space-between; position:fixed; top:0; left:0; right:0; padding:1mm 14mm 0.5mm; font-size:7pt; color:#102640; background:#fff; border-bottom:1px solid #dce3eb; z-index:9999; }
+    .print-footer { display:flex !important; position:fixed; bottom:0; left:0; right:0; padding:0.5mm 14mm 1mm; border-top:1px solid #dce3eb; background:#fff; }
+    .print-footer span { display:none !important; }
+    .card, .resumo-item { box-shadow:none !important; }
+    #resumo { margin:0 auto 6mm !important; }
+    .resumo-row { grid-template-columns:repeat(4, minmax(0, 1fr)) !important; gap:4px !important; }
+    .resumo-grid.resumo-grid-linhas { gap:4px !important; }
+    .resumo-item { padding:4px 6px !important; border-radius:6px !important; }
+    .resumo-item span:first-child { font-size:0.6rem !important; }
+    .resumo-item span:last-child { font-size:0.75rem !important; }
+    .tabela-card { overflow:visible !important; border:none !important; }
+    .table-wrap { overflow:visible !important; }
+    .tabela-parcelas { font-size:8.5pt !important; }
+    .tabela-parcelas thead th { position:static; background:#003366 !important; color:#fff !important; padding:5px 6px !important; }
+    .tabela-parcelas td { padding:4px 6px !important; border-bottom:1px solid #ccd !important; }
+    .tabela-parcelas tbody tr.carencia-row td { background:#e7f1ff !important; }
+    tr { page-break-inside:avoid; }
+    thead { display:table-header-group; }
+    #rodapeSimulacao { font-size:7.5pt !important; padding:4mm 6mm !important; page-break-inside:avoid; break-inside:avoid; }
+}
+
+/* ===== Comum às páginas v2 ===== */
+.inicio-linha { grid-column:1; }
+.field > label.switch { display:inline-flex; margin-bottom:0; }
+.titulo-impressao { display:none; }
+.nota-campos { margin:14px 0 0; font-size:0.76rem; color:var(--texto-suave); line-height:1.45; }
+.nota-campos + .nota-campos { margin-top:4px; }
+.entrada input[readonly] { background:#f3f6fa; color:#5b6f89; }
+.page-container:has(#tabela tr) .estado-vazio { display:none; }
+
+/* Regras FBA (tabelas laterais) */
+.fba-titulo-coluna { font-size:0.66rem; }
+.fba-nota-rodape { margin-top:8px; font-size:0.74rem; color:var(--texto-suave); font-style:italic; }
+
+/* Impacto no limite (linhas geradas pelo cálculo) */
+.impacto-tabela { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+.impacto-tabela td { padding:9px 2px; border-bottom:1px solid #eef2f7; }
+.impacto-tabela td:last-child { text-align:right; font-weight:700; color:var(--texto); white-space:nowrap; }
+.impacto-tabela tr:last-child td { border-bottom:none; border-top:1px solid var(--borda); padding-top:11px; font-weight:700; color:var(--azul-800); }
+.impacto-tabela tr:last-child td:last-child { font-size:1.05rem; }
+
+/* Prorrogação */
+.status-prorrog { margin-top:14px; padding:10px 12px; border-radius:8px; font-size:0.84rem; font-weight:700; background:#eef6fb; color:#1f3b5a; }
+.status-prorrog.ok { background:#e8f6ee; color:#1d6b3a; }
+.status-prorrog.erro { background:#fdecee; color:#b2202f; }
+.status-prorrog.aviso { background:#fff6e0; color:#8a5a00; }
+.prorrog-card .switch { height:auto; margin-top:12px; font-size:0.84rem; }
+.prorrog-card .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.acoes .switch { height:40px; font-weight:600; color:var(--azul-800); }
+.tabela-parcelas tbody tr.historico-row td { color:#6b7a90; background:#f3f5f8; }
+.tabela-parcelas tbody tr.prorrog-row td { background:#fff6e0; font-weight:700; }
+.tabela-parcelas tbody tr.substituida-row td { color:#9aa6b6; background:#f6f7f9; text-decoration:line-through; }
+.tabela-parcelas tbody tr.substituida-row td:first-child::after { display:none; }
+#operacaoOriginal { margin-top:28px; }
+#operacaoOriginal .resumo-original { padding:18px 20px; }
+#operacaoOriginal h3 { margin:0 0 12px; font-size:1rem; color:var(--azul-800); }
+#operacaoOriginal .nota-original { margin-top:10px; font-size:0.76rem; color:var(--texto-suave); }
+#operacaoOriginal .tabela-card { margin-top:14px; }
+
+@media print {
+    .titulo-impressao { display:block !important; text-align:center; margin:12mm 0 4mm; }
+    .titulo-impressao h1 { font-size:1.4rem !important; line-height:1.3; color:#003366; margin:0; letter-spacing:0.01em; }
+    .topo { display:none !important; }
+    .impacto-tabela { display:none !important; }
+    #operacaoOriginal { page-break-before:always; break-before:page; margin-top:0 !important; }
+    #operacaoOriginal .resumo-original { box-shadow:none !important; padding:4mm 3mm !important; }
+    .tabela-parcelas tbody tr.prorrog-row td { background:#fff6e0 !important; }
+    .tabela-parcelas tbody tr.historico-row td { background:#f3f5f8 !important; }
+    .tabela-parcelas tbody tr.substituida-row td { background:#f6f7f9 !important; }
+}
+
+/* Amortizações */
+.amort-cabecalho, .amort-linha { display:grid; grid-template-columns:22px minmax(0, 1.1fr) minmax(0, 1fr) 30px; gap:8px; align-items:center; }
+.amort-cabecalho { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--texto-suave); margin-bottom:6px; }
+.amort-linha { margin-bottom:8px; }
+.amort-linha[hidden] { display:none; }
+.amort-num { width:22px; height:22px; border-radius:50%; background:var(--azul-100); color:var(--azul-700); font-size:0.72rem; font-weight:700; display:grid; place-items:center; }
+.amort-linha .entrada input { height:36px; font-size:0.86rem; }
+.amort-linha .entrada input[type="date"] { padding:0 6px; }
+.amort-linha .entrada input[type="text"] { padding:0 10px; text-align:right; }
+.amort-remover { width:30px; height:30px; border-radius:8px; border:1px solid #d6dee9; background:var(--branco); color:#8a99ad; font-size:1.1rem; line-height:1; cursor:pointer; }
+.amort-remover:hover:not(:disabled) { color:#b2202f; border-color:#f3c4ca; background:#fdecee; }
+.amort-remover:disabled { opacity:0.35; cursor:default; }
+.amort-status { grid-column:2 / -1; font-size:0.74rem; font-weight:600; color:var(--texto-suave); min-height:0; }
+.amort-status:empty { display:none; }
+.amort-status.ok { color:#1d6b3a; }
+.amort-status.aviso { color:#8a5a00; }
+.amort-status.erro { color:#b2202f; }
+.btn-adicionar { margin-top:4px; width:100%; height:36px; border-radius:8px; border:1px dashed #9fbbe0; background:var(--azul-50); color:var(--azul-700); font-weight:600; font-size:0.85rem; cursor:pointer; }
+.btn-adicionar:hover { background:var(--azul-100); }
+.btn-adicionar[hidden] { display:none; }
+.tabela-parcelas tbody tr.amort-row td { background:#eaf7ef; color:#1d6b3a; font-weight:700; }
+.tabela-parcelas tbody tr.amort-row td:nth-child(4) { font-weight:400; color:#5b8a6c; font-style:italic; }
+@media print {
+    .tabela-parcelas tbody tr.amort-row td { background:#eaf7ef !important; }
+}
+</style>
+<script src="menu.js"></script>
+</head>
+
+<body data-menu-ativo="SimuladorPRONAMPEAmort.html">
+<div class="print-header">
+    <span class="print-header-left">Data da simulação: <span id="printDate"></span></span>
+    <span class="print-header-right">Não possui caráter de proposta financeira</span>
+</div>
+<div class="print-footer"><span></span></div>
+
+<div class="conteudo">
+
+<header class="topo">
+    <div>
+        <div class="trilha">Amortizações › Linha Governo</div>
+        <h1>PRONAMPE / PROCRED</h1>
+    </div>
+    <span class="chip">Simulação de amortização</span>
+</header>
+
+<div class="page-container">
+<div class="titulo-impressao"><h1 id="tituloSimulacao">Simulação BB Capital de Giro - PRONAMPE - Amortização</h1></div>
+
+<div class="layout-entrada">
+<section class="card dados-card">
+    <div class="card-cabecalho"><h2>Dados da Operação</h2></div>
+    <div class="card-corpo">
+<div class="grupo-campos">
+<p class="grupo-titulo">Operação</p>
+<div class="form-grid">
+<div class="field">
+    <label for="valor">Valor</label>
+    <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="valor" type="text" inputmode="decimal" data-mascara="moeda" value="150.000,00"></div>
+</div>
+<div class="field">
+    <label for="dataLiberacao">Data de liberação*</label>
+    <div class="entrada"><input id="dataLiberacao" type="date"></div>
+</div>
+<div class="field">
+    <label for="dataBase">Data base</label>
+    <div class="entrada com-sufixo"><input id="dataBase" type="number" min="1" max="31"><span class="sufixo">dia</span></div>
+</div>
+<div class="field">
+    <label for="carencia">Carência</label>
+    <div class="entrada com-sufixo"><input id="carencia" type="number" min="0" value="6"><span class="sufixo">meses</span></div>
+</div>
+<div class="field">
+    <label for="prazo">Prazo total</label>
+    <div class="entrada com-sufixo"><input id="prazo" type="number" min="1" value="48"><span class="sufixo">meses</span></div>
+</div>
+</div>
+</div>
+<div class="grupo-campos">
+<p class="grupo-titulo">Taxa</p>
+<div class="form-grid">
+<div id="taxasCdiContainer" class="field">
+    <label for="cdi">TMS atual</label>
+    <div class="entrada com-sufixo"><input id="cdi" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="13.90"><span class="sufixo">% a.a.</span></div>
+</div>
+<div id="sobretaxaContainer" class="field">
+    <label for="st">Sobretaxa</label>
+    <div class="entrada com-sufixo"><input id="st" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="6.00"><span class="sufixo">% a.a.</span></div>
+</div>
+<div id="jurosCarenciaContainer" class="field">
+    <label for="jurosCarencia">Juros na carência?</label>
+    <div class="entrada"><select id="jurosCarencia"><option value="SIM">SIM</option><option value="NAO" selected>NÃO</option></select></div>
+</div>
+</div>
+</div>
+<div class="grupo-campos">
+<p class="grupo-titulo">Despesas e garantias</p>
+<div class="form-grid">
+<div id="seguroContainer" class="field">
+    <label for="seguro">Seguro prestamista</label>
+    <label class="switch" for="seguro"><input type="checkbox" id="seguro" role="switch"><span class="trilho"></span><span>Contratar</span></label>
+</div>
+<div id="sociosContainer" class="field">
+    <label for="socios">Sócios</label>
+    <div class="entrada"><input id="socios" type="number" min="1" value="1"></div>
+</div>
+<div id="iofDiarioContainer" class="field inicio-linha">
+    <label for="iofDiario">IOF diário</label>
+    <div class="entrada com-sufixo"><input id="iofDiario" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="0.0082"><span class="sufixo">%</span></div>
+</div>
+<div id="iofAdicionalContainer" class="field">
+    <label for="iofAdicional">IOF adicional</label>
+    <div class="entrada com-sufixo"><input id="iofAdicional" type="text" inputmode="decimal" data-mascara="decimal-num" data-casas="4" value="0.38"><span class="sufixo">%</span></div>
+</div>
+</div>
+</div>
+<p class="nota-campos">*A data de liberação é a mesma da cobrança do IOF no extrato da operação.</p>
+    </div>
+</section>
+
+<div class="coluna-lateral">
+<section class="card dados-card amort-card">
+    <div class="card-cabecalho"><div><h2>Amortizações</h2><div class="card-subtitulo">Sem limite de quantidade, inclusive mais de uma entre parcelas</div></div><span id="qtdAmortizacoes" class="selo-periodo">1 amortização</span></div>
+    <div class="card-corpo">
+        <div class="amort-cabecalho"><span></span><span>Data</span><span>Valor (R$)</span><span></span></div>
+        <div id="listaAmortizacoes"></div>
+        <button type="button" id="btnAdicionarAmort" class="btn-adicionar" onclick="adicionarAmortizacao()">+ Adicionar amortização</button>
+        <p class="nota-campos"><strong>IN 590:</strong> permitido apenas amortização do tipo proporcional. Após cada amortização, o capital das próximas parcelas é o saldo de capital dividido pelas parcelas restantes.</p>
+        <p class="nota-campos">Linhas sem valor não são consideradas.</p>
+    </div>
+</section>
+</div>
+</div>
+
+<div class="card acoes">
+    <button id="btnCalcular" class="btn btn-primario" onclick="calcular()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>
+        Calcular
+    </button>
+    <button id="btnPrint" class="btn btn-secundario" onclick="window.print()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+        Imprimir
+    </button>
+    <span class="espaco"></span>
+    <label class="switch" for="switchOriginal"><input type="checkbox" id="switchOriginal" class="no-reset" role="switch" onchange="alternarOperacaoOriginal()"><span class="trilho"></span><span>Mostrar operação sem amortização</span></label>
+    <details id="filtroCamposResumo" class="filter-card">
+        <summary>Campos do resumo</summary>
+        <div class="filter-painel">
+            <div class="filter-options"><label class="filter-option"><input type="checkbox" data-resumo-campo="valor" checked>Valor</label><label class="filter-option"><input type="checkbox" data-resumo-campo="taxaMensal" checked>Taxa Mensal</label><label class="filter-option"><input type="checkbox" data-resumo-campo="liberacao" checked>Liberação</label><label class="filter-option"><input type="checkbox" data-resumo-campo="dataBase" checked>Data Base</label><label class="filter-option"><input type="checkbox" data-resumo-campo="carencia" checked>Carência</label><label class="filter-option"><input type="checkbox" data-resumo-campo="prazoTotal" checked>Prazo Total</label><label class="filter-option"><input type="checkbox" data-resumo-campo="seguroParcela" checked>Seguro Parcela</label><label class="filter-option"><input type="checkbox" data-resumo-campo="seguroTotal" checked>Seguro Total</label><label class="filter-option"><input type="checkbox" data-resumo-campo="iofTotal" checked>IOF Total</label><label class="filter-option"><input type="checkbox" data-resumo-campo="despesaTotal" checked>Despesa Tot.</label><label class="filter-option"><input type="checkbox" data-resumo-campo="totalLiquido" checked>Total Líq.</label><label class="filter-option"><input type="checkbox" data-resumo-campo="totalAmortizado" checked>Total Amortizado</label><label class="filter-option"><input type="checkbox" data-resumo-campo="reducaoJuros" checked>Redução de Juros</label><label class="filter-option"><input type="checkbox" data-resumo-campo="cetMensal" checked>CET Mensal</label><label class="filter-option"><input type="checkbox" data-resumo-campo="cetAnual" checked>CET Anual</label><label class="filter-option"><input type="checkbox" data-resumo-campo="totalPagar" checked>Total Pagar</label></div>
+            <div class="filter-actions">
+                <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(true)">Todos</button>
+                <button type="button" class="filter-action" onclick="marcarTodosCamposResumo(false)">Limpar</button>
+                <span class="filter-aviso">Marque os campos que devem aparecer no resumo e na impressão</span>
+            </div>
+        </div>
+    </details>
+</div>
+
+<div id="estadoVazio" class="estado-vazio">
+    <strong>Nenhuma simulação ainda</strong>
+    Preencha os dados da operação e clique em <b>Calcular</b> para ver o resumo e o cronograma de parcelas.
+</div>
+
+<div id="resumo"></div>
+
+<section class="card tabela-card">
+    <div class="table-wrap">
+        <table class="tabela-parcelas">
+            <thead><tr><th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th id="parcelaHeader">Parcela</th><th>Saldo Devedor</th></tr></thead>
+            <tbody id="tabela"></tbody>
+        </table>
+    </div>
+</section>
+
+<div id="rodapeSimulacao" class="card"></div>
+
+<section id="operacaoOriginal" hidden>
+    <div class="card resumo-original">
+        <h3>Operação sem amortização</h3>
+        <div id="resumoOriginal" class="resumo-grid resumo-grid-linhas"></div>
+        <div class="nota-original">Cronograma conforme contratado, sem as amortizações.</div>
+    </div>
+    <section class="card tabela-card">
+        <div class="table-wrap">
+            <table class="tabela-parcelas">
+                <thead><tr><th>Posição</th><th>Data</th><th>Capital</th><th>Juros</th><th>Parcela</th><th>Saldo Devedor</th></tr></thead>
+                <tbody id="tabelaOriginal"></tbody>
+            </table>
+        </div>
+    </section>
+</section>
+</div>
+</div>
+
+<script>
+
+let feriadosSet = new Set();
+let tabelaSeguro = [];
+let tmsDados = null;
+let dadosCompartilhadosCarregados = false;
+let tmsDadosCarregados = false;
+
+fetch("shared-data.json").then(response => {
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+}).then(data => {
+    feriadosSet = new Set(data.feriados);
+    tabelaSeguro = data.tabelaSeguro;
+    dadosCompartilhadosCarregados = true;
+    atualizarStatusAmortizacoes();
+}).catch(error => console.error("Não foi possível carregar shared-data.json:", error));
+
+fetch("./TMS.json").then(response => {
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+}).then(data => {
+    tmsDados = data;
+    indiceCache.clear();
+    const faixaVigente = data.taxasReferencia.find(item => item.dataFinal === null) || data.taxasReferencia[data.taxasReferencia.length - 1];
+    if(faixaVigente) cdi.value = faixaVigente.taxaAnual;
+    tmsDadosCarregados = true;
+}).catch(error => console.error("Não foi possível carregar TMS.json:", error));
+
+// ================= Utilitários de data =================
+
+function parseDateLocal(value){
+    if(!value) return null;
+    const parts = value.split('-');
+    if(parts.length !== 3) return null;
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+}
+
+function formatDateLocal(date){
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateBR(value){
+    if(typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)){
+        const parts = value.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const date = new Date(value);
+    if(isNaN(date)) return value;
+    return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+}
+
+function parseValor(str){
+    if(!str) return NaN;
+    return parseFloat(String(str).trim().replace(/\./g, '').replace(',', '.'));
+}
+
+function formatReal(value){
+    if(value === null || isNaN(value)) return "R$ 0,00";
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function cloneDate(d){
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function mesmoDia(a, b){
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function ehUtil(data){
+    const dia = data.getDay();
+    return dia !== 0 && dia !== 6 && !feriadosSet.has(formatDateLocal(data));
+}
+
+function proximoUtil(data){
+    let d = cloneDate(data);
+    while(!ehUtil(d)){
+        d.setDate(d.getDate()+1);
+    }
+    return d;
+}
+
+// Diferença em dias corridos (B2 - B1 no Excel)
+function difDias(d1, d2){
+    return Math.round((cloneDate(d2) - cloneDate(d1)) / 86400000);
+}
+
+// NETWORKDAYS(d1, d2, Feriados) - conta dias úteis inclusive
+function networkdays(d1, d2){
+    let count = 0;
+    let d = cloneDate(d1);
+    const fim = cloneDate(d2);
+    while(d <= fim){
+        if(ehUtil(d)) count++;
+        d.setDate(d.getDate()+1);
+    }
+    return count;
+}
+
+function round2(valor){
+    return Math.round(valor * 100) / 100;
+}
+
+// ================= Índice TMS =================
+
+const indiceCache = new Map();
+
+function obterDataMaximaIndice(){
+    const dataBase = new Date();
+    dataBase.setHours(0, 0, 0, 0);
+    dataBase.setDate(dataBase.getDate() + 31);
+    dataBase.setDate(dataBase.getDate() + 1);
+    return proximoUtil(dataBase);
+}
+
+function obterTaxaTMS(data){
+    const dataConsulta = cloneDate(data);
+    dataConsulta.setDate(dataConsulta.getDate() - 1);
+    const chave = formatDateLocal(dataConsulta);
+    const faixa = tmsDados.taxasReferencia.find(item => chave >= item.dataInicial && (!item.dataFinal || chave <= item.dataFinal));
+    return faixa ? faixa.taxaAnual : null;
+}
+
+function obterIndiceTMS(data){
+    const alvo = cloneDate(data);
+    const chave = formatDateLocal(alvo);
+    if(indiceCache.has(chave)) return indiceCache.get(chave);
+
+    const historico = tmsDados.historico;
+    let registroBase = null;
+    let ini = 0, fim = historico.length - 1;
+    while(ini <= fim){
+        const meio = (ini + fim) >> 1;
+        if(historico[meio].data <= chave){
+            registroBase = historico[meio];
+            ini = meio + 1;
+        } else {
+            fim = meio - 1;
+        }
+    }
+    if(!registroBase) return null;
+    if(registroBase.data === chave){
+        indiceCache.set(chave, registroBase.valor);
+        return registroBase.valor;
+    }
+
+    let cursor = parseDateLocal(registroBase.data);
+    let indice = registroBase.valor;
+    while(cursor < alvo){
+        cursor.setDate(cursor.getDate() + 1);
+        if(!ehUtil(cursor)) continue;
+        const taxa = obterTaxaTMS(cursor);
+        if(taxa === null) return null;
+        indice = Number((indice * ((1 + taxa / 100) ** (1 / 252))).toFixed(8));
+    }
+    indiceCache.set(chave, indice);
+    return indice;
+}
+
+// Fator de juros do período (Excel: VLOOKUP TMS / projeção pela TMS atual)
+function fatorJurosTMS(dataAnterior, dataAtual, ctx){
+    const du = networkdays(dataAnterior, dataAtual) - 1;
+    if(dataAtual > ctx.dataMaximaIndice){
+        return ((1 + ctx.tms) * (1 + ctx.st)) ** (du / 252) - 1;
+    }
+    const indiceAnterior = obterIndiceTMS(dataAnterior);
+    const indiceAtual = obterIndiceTMS(dataAtual);
+    if(indiceAnterior === null || indiceAtual === null){
+        throw new Error("Não foi possível obter o índice TMS para uma das datas das parcelas.");
+    }
+    return (indiceAtual / indiceAnterior) * ((1 + ctx.st) ** (du / 252)) - 1;
+}
+
+function obterTaxaSeguro(dias){
+    const faixa = tabelaSeguro.find(f => dias >= f.min && dias <= f.max);
+    return faixa ? faixa.taxa : 0;
+}
+
+// XIRR (base 365 dias), por bisseção
+function calcularXIRR(fluxos){
+    if(fluxos.length < 2) return null;
+    const d0 = fluxos[0].data;
+    const itens = fluxos.map(f => ({ valor: f.valor, t: difDias(d0, f.data) / 365 }));
+    const npv = taxa => itens.reduce((total, f) => total + f.valor / ((1 + taxa) ** f.t), 0);
+    let min = -0.9999;
+    let max = 1;
+    while(npv(max) < 0 && max < 1e6) max *= 2;
+    const npvMin = npv(min);
+    const npvMax = npv(max);
+    if(!isFinite(npvMin) || !isFinite(npvMax) || Math.sign(npvMin) === Math.sign(npvMax)) return null;
+    for(let i = 0; i < 200; i++){
+        const meio = (min + max) / 2;
+        const v = npv(meio);
+        if(Math.sign(v) === Math.sign(npvMin)) min = meio; else max = meio;
+    }
+    return (min + max) / 2;
+}
+
+// ================= Aba PRONAMPE-PROCRED (operação original) =================
+
+// Datas das parcelas: dia base (ou dia 1 do mês quando base > 28), ajustada para o próximo dia útil
+function dataParcela(d0, base, n){
+    const dt = base >= 29
+        ? new Date(d0.getFullYear(), d0.getMonth() + n, 1)
+        : new Date(d0.getFullYear(), d0.getMonth() + n, base);
+    return proximoUtil(dt);
+}
+
+function limitarDiasIOF(somaDias, dias){
+    if(somaDias === 365) return 0;
+    if(somaDias + dias > 365) return 365 - somaDias;
+    return dias;
+}
+
+function calcularOperacaoOriginal(p){
+    const ajuste = p.base > 28 ? 1 : 0;
+    const E5 = p.carencia + ajuste;        // carência ajustada
+    const E6 = p.prazo + ajuste;           // prazo ajustado
+    const J6 = p.jurosCarencia ? 1 : 2;    // 1 = cobra juros na carência
+
+    const datas = [cloneDate(p.d0)];
+    for(let n = 1; n <= E6; n++) datas.push(dataParcela(p.d0, p.base, n));
+
+    const taxaSeguro = obterTaxaSeguro(difDias(p.d0, datas[E6]));
+    const totalSeguro = p.seguro ? p.valor * taxaSeguro * p.socios : 0;            // F10
+    const divisorSeguro = E6 - (p.base > 28 ? 2 : 1);
+    const parcelaSeguro = p.seguro && divisorSeguro > 0 ? totalSeguro / divisorSeguro : 0; // F9
+    const seguroPrimeira = p.base > 28 ? 0 : parcelaSeguro;
+
+    const linhas = [{ n:0, data:datas[0], F:0, G:0, H:0, I:0, J:p.valor, K:p.valor, L:0, M:0 }];
+    let somaL = 0;
+    for(let n = 1; n <= E6; n++){
+        const ant = linhas[n - 1];
+        const data = datas[n];
+        const F = n <= E5 ? 0 : p.valor / (E6 - E5);
+        let G = ant.K * fatorJurosTMS(ant.data, data, p);
+        if(!(J6 === 1 || n <= E5) && ant.J > 0) G += ant.H * F / ant.J;
+        const H = J6 === 1 ? 0 : (n <= E5 ? G + ant.H : ant.H - (ant.J > 0 ? ant.H * F / ant.J : 0));
+        let I;
+        if(n === 1){
+            I = J6 === 1 ? G + F + seguroPrimeira : (n <= E5 ? seguroPrimeira : G + F + seguroPrimeira);
+        } else {
+            const X = J6 === 1 ? G + F : (n <= E5 ? 0 : G + F);
+            I = (n >= E6 - 1) ? X : parcelaSeguro + X;
+        }
+        const J = ant.J - F;
+        const K = (H + J <= 0) ? 0 : J + H;
+        const L = n === 1 ? difDias(p.d0, data) : limitarDiasIOF(somaL, difDias(ant.data, data));
+        const M = n === 1 ? round2(p.iofDiario * L * p.valor) : round2(p.iofDiario * ant.J * L);
+        somaL += L;
+        linhas.push({ n, data, F, G, H, I, J, K, L, M });
+    }
+
+    const iofDiario = linhas.reduce((s, l) => s + l.M, 0);    // K7
+    const iofAdicional = p.valor * p.iofAdicional;            // K8
+    const despesaTotal = iofDiario + iofAdicional + parcelaSeguro; // K9
+    const totalLiquido = p.valor - despesaTotal;               // K10
+
+    return { E5, E6, J6, datas, linhas, parcelaSeguro, totalSeguro, iofDiario, iofAdicional, despesaTotal, totalLiquido };
+}
+
+// ================= Aba PRONAMPE (AMORT) =================
+
+// Coluna X da planilha: posição da primeira parcela posterior à data da amortização.
+// Coluna Z: avisos de "DIA DA PARCELA" e "NÃO É DIA ÚTIL".
+function localizarAmortizacao(orig, data){
+    const diaParcela = orig.datas.slice(1).some(d => mesmoDia(d, data));
+    let V = null;
+    for(let k = 1; k < orig.datas.length; k++){
+        if(data > orig.datas[k - 1] && data < orig.datas[k]){
+            V = k;
+            break;
+        }
+    }
+    return { V, diaParcela, diaUtil: ehUtil(data) };
+}
+
+// Valida as amortizações informadas. Linhas sem valor são ignoradas.
+// Diferente da planilha (V4:W10, uma por período), aceita quantas forem necessárias,
+// inclusive mais de uma entre duas parcelas (processadas em ordem de data).
+function prepararAmortizacoes(orig, amortizacoes){
+    const porParcela = new Map();   // V -> lista de amortizações do período
+    const validas = [];
+    const erros = [];
+    const situacao = {};
+    amortizacoes.forEach(a => {
+        const temData = a.data && !isNaN(a.data.getTime());
+        if(!temData && !(a.valor > 0)){ situacao[a.slot] = { texto:"", classe:"" }; return; }
+        if(!(a.valor > 0)){ situacao[a.slot] = { texto:"Sem valor: não será considerada.", classe:"aviso" }; return; }
+        if(!temData){
+            erros.push(`Amortização ${a.slot}: informe a data.`);
+            situacao[a.slot] = { texto:"Informe a data.", classe:"erro" };
+            return;
+        }
+        const loc = localizarAmortizacao(orig, a.data);
+        if(loc.diaParcela){
+            erros.push(`Amortização ${a.slot}: a data coincide com o dia de uma parcela.`);
+            situacao[a.slot] = { texto:"DIA DA PARCELA: escolha outra data.", classe:"erro" };
+            return;
+        }
+        if(loc.V === null){
+            erros.push(`Amortização ${a.slot}: data fora do período da operação.`);
+            situacao[a.slot] = { texto:"Data fora do período da operação.", classe:"erro" };
+            return;
+        }
+        const item = { ...a, V: loc.V, diaUtil: loc.diaUtil };
+        if(!porParcela.has(loc.V)) porParcela.set(loc.V, []);
+        porParcela.get(loc.V).push(item);
+        validas.push(item);
+        const naCarencia = loc.V <= orig.E5 ? " (na carência)" : "";
+        situacao[a.slot] = loc.diaUtil
+            ? { texto:`Antes da parcela ${loc.V}${naCarencia}.`, classe:"ok" }
+            : { texto:`Antes da parcela ${loc.V}${naCarencia}. Atenção: NÃO é dia útil!`, classe:"aviso" };
+    });
+    // várias no mesmo período: ordem de data (empate: ordem informada)
+    porParcela.forEach(lista => lista.sort((x, y) => (x.data - y.data) || (x.slot - y.slot)));
+    return { porParcela, validas, erros, situacao };
+}
+
+// Replica as colunas B, E, F, G, H, J, K, L, M e N da aba PRONAMPE (AMORT), linhas 12 a 73.
+// Amortização do tipo PROPORCIONAL (IN 590): após cada amortização, o capital de cada parcela
+// passa a ser o saldo de capital dividido pela quantidade de parcelas restantes.
+//   H = capital | J = juros | K = saldo devedor de juros (juros capitalizados na carência)
+//   L = parcela total | M = saldo devedor de capital | N = saldo devedor (M + K)
+function calcularAmortizacao(orig, p){
+    const prep = prepararAmortizacoes(orig, p.amortizacoes);
+    if(prep.erros.length) throw new Error(prep.erros.join("\n"));
+
+    const E5 = orig.E5;                     // $H$5 carência
+    const E6 = orig.E6;                     // $H$6 prazo total
+    const M6 = orig.J6;                     // $M$6: 1 = juros cobrados na carência; 2 = capitalizados
+    const H9 = orig.parcelaSeguro;          // $H$9 parcela do seguro
+    const seguroPrimeira = p.base > 28 ? 0 : H9;
+
+    // Linha 12 (liberação)
+    const l12 = { E:0, data:cloneDate(orig.datas[0]), amort:false, H:0, J:0, K:0, L:-orig.totalLiquido, M:p.valor, N:p.valor };
+    const linhas = [];
+    let ant = l12;          // linha anterior
+    let base = l12;         // última linha que não é de amortização (na planilha, duas linhas acima da parcela)
+    let jurosPendentes = 0; // juros apurados nas linhas de amortização, cobrados na parcela seguinte
+    let deducaoJuros = 0;   // parte das amortizações abatida dos juros capitalizados (tipo 2)
+
+    function adicionarLinha(E, amort){
+        const primeira = linhas.length === 0;
+        const data = amort ? cloneDate(amort.data) : orig.datas[E];        // B
+        const carencia = E <= E5;
+        const posAmort = ant.amort;                                          // G da linha anterior = 1
+        const f = fatorJurosTMS(ant.data, data, p);
+
+        // H: capital (linha de amortização = valor amortizado; demais = saldo de capital / parcelas restantes)
+        const H = amort ? amort.valor : (carencia ? 0 : ant.M / (E6 - E + 1));
+
+        // J: juros do período
+        let J;
+        if(M6 === 1 || carencia){
+            J = (ant.N + (posAmort && M6 === 1 ? jurosPendentes : 0)) * f;
+        } else {
+            J = ant.N * f + (amort ? 0 : (base.M > 0 ? base.K * H / base.M : 0));
+        }
+
+        // K: saldo devedor de juros capitalizados (somente quando não há cobrança de juros na carência)
+        const parcelaJurosAmort = amort && M6 === 2 && (ant.M + ant.K) > 0 ? H * (ant.K / (ant.M + ant.K)) : 0;
+        let K;
+        if(M6 === 1){
+            K = 0;
+        } else if(amort || carencia){
+            K = J + ant.K - parcelaJurosAmort;
+        } else {
+            K = base.K - (base.M > 0 ? base.K * H / base.M : 0) - (posAmort ? deducaoJuros : 0);
+        }
+
+        // M: saldo devedor de capital (tipo 2: a amortização é rateada entre capital e juros capitalizados)
+        const M = ant.M - (amort
+            ? (M6 === 1 ? H : ((ant.M + ant.K) > 0 ? H * (ant.M / (ant.M + ant.K)) : H))
+            : H);
+
+        // N: saldo devedor
+        const N = (K + M <= 0) ? 0 : M + K;
+
+        // L: parcela total (amortização paga só o valor amortizado; seguro fora das 2 últimas parcelas)
+        let L;
+        if(amort){
+            L = H;
+        } else {
+            const juros = J + (posAmort ? jurosPendentes : 0);
+            const valorParcela = (M6 === 1 || !carencia) ? juros + H : 0;
+            const ultimas = !primeira && (E === E6 - 1 || E === E6);
+            L = valorParcela + (ultimas ? 0 : (primeira ? seguroPrimeira : H9));
+        }
+
+        const linha = { E, data, amort: !!amort, slot: amort ? amort.slot : null, H, J, K, L, M, N, carencia: !amort && carencia };
+        linhas.push(linha);
+
+        if(amort){
+            if(M < -0.005) throw new Error(`Amortização ${amort.slot}: o valor excede o saldo devedor de capital na data.`);
+            jurosPendentes += J;
+            deducaoJuros += parcelaJurosAmort;
+        } else {
+            jurosPendentes = 0;
+            deducaoJuros = 0;
+            base = linha;
+        }
+        ant = linha;
+    }
+
+    for(let E = 1; E <= E6; E++){
+        (prep.porParcela.get(E) || []).forEach(amort => adicionarLinha(E, amort));
+        adicionarLinha(E, null);
+    }
+
+    const totalAmortizado = prep.validas.reduce((s, a) => s + a.valor, 0);
+    const totalParcelas = linhas.reduce((s, l) => s + l.L, 0);
+    const totalPagar = totalParcelas + orig.despesaTotal;                            // N74
+    const fluxos = [{ data: l12.data, valor: l12.L }]
+        .concat(linhas.map(l => ({ data: l.data, valor: l.L })));
+    const cetAnual = calcularXIRR(fluxos);                                           // J75
+    const cetMensal = cetAnual === null ? null : ((1 + cetAnual) ** (1 / 12)) - 1;   // J74
+
+    const totalOriginal = orig.linhas.slice(1).reduce((s, l) => s + l.I, 0);
+
+    return { l12, linhas, amortizacoes: prep.validas, totalAmortizado, totalPagar, cetAnual, cetMensal,
+             reducaoJuros: totalOriginal - totalParcelas };
+}
+
+// ================= Interface =================
+
+function linhasAmortizacao(){
+    return Array.from(document.querySelectorAll("#listaAmortizacoes .amort-linha"));
+}
+
+function lerAmortizacoes(){
+    return linhasAmortizacao().map((linha, i) => ({
+        slot: i + 1,
+        linha,
+        data: parseDateLocal(linha.querySelector(".amort-data").value),
+        valor: parseValor(linha.querySelector(".amort-valor").value) || 0
+    }));
+}
+
+function lerParametros(){
+    return {
+        valor: parseValor(valorInput.value),
+        d0: parseDateLocal(dataLiberacaoInput.value),
+        base: parseInt(dataBaseInput.value, 10),
+        carencia: parseInt(carenciaInput.value, 10),
+        prazo: parseInt(prazoInput.value, 10),
+        tms: parseFloat(cdi.value) / 100,
+        st: parseFloat(st.value) / 100,
+        jurosCarencia: jurosCarenciaSelect.value === "SIM",
+        seguro: seguroSelect.checked,
+        socios: parseInt(sociosInput.value, 10) || 1,
+        iofDiario: parseFloat(iofDiarioInput.value || 0.0082) / 100,
+        iofAdicional: parseFloat(iofAdicionalInput.value || 0.38) / 100,
+        amortizacoes: lerAmortizacoes(),
+        dataMaximaIndice: obterDataMaximaIndice()
+    };
+}
+
+function validarParametros(p){
+    if(!p.valor || !p.d0 || isNaN(p.d0.getTime()) || !p.prazo || isNaN(p.base) || p.base < 1 || p.base > 31 || isNaN(p.carencia)){
+        return "Preencha todos os campos obrigatórios da operação.";
+    }
+    if(p.carencia >= p.prazo) return "A carência deve ser menor que o prazo total.";
+    return null;
+}
+
+function datasDaOperacao(p){
+    const ajuste = p.base > 28 ? 1 : 0;
+    const E6 = p.prazo + ajuste;
+    const datas = [cloneDate(p.d0)];
+    for(let n = 1; n <= E6; n++) datas.push(dataParcela(p.d0, p.base, n));
+    return { datas, E5: p.carencia + ajuste, E6 };
+}
+
+function atualizarStatusAmortizacoes(){
+    if(!dadosCompartilhadosCarregados) return;
+    const p = lerParametros();
+    const erro = validarParametros(p);
+    p.amortizacoes.forEach(a => {
+        const el = a.linha.querySelector(".amort-status");
+        el.textContent = "";
+        el.className = "amort-status";
+    });
+    if(erro) return;
+    const { situacao, porParcela } = prepararAmortizacoes(datasDaOperacao(p), p.amortizacoes);
+    p.amortizacoes.forEach(a => {
+        const s = situacao[a.slot];
+        if(!s) return;
+        let texto = s.texto;
+        const grupo = [...porParcela.values()].find(l => l.some(x => x.slot === a.slot));
+        if(grupo && grupo.length > 1) texto += ` ${grupo.length} amortizações neste período.`;
+        const el = a.linha.querySelector(".amort-status");
+        el.textContent = texto;
+        el.className = "amort-status" + (s.classe ? " " + s.classe : "");
+    });
+}
+
+// ----- Lista de amortizações (sem limite de quantidade) -----
+let contadorAmortizacao = 0;
+
+function renumerarAmortizacoes(){
+    const linhas = linhasAmortizacao();
+    linhas.forEach((l, i) => {
+        l.querySelector(".amort-num").textContent = i + 1;
+        l.querySelector(".amort-data").setAttribute("aria-label", `Data da amortização ${i + 1}`);
+        l.querySelector(".amort-valor").setAttribute("aria-label", `Valor da amortização ${i + 1}`);
+        l.querySelector(".amort-remover").disabled = linhas.length === 1;
+    });
+    document.getElementById("qtdAmortizacoes").textContent =
+        linhas.length === 1 ? "1 amortização" : `${linhas.length} amortizações`;
+}
+
+function adicionarAmortizacao(dataInicial){
+    contadorAmortizacao++;
+    const id = contadorAmortizacao;
+    const linha = document.createElement("div");
+    linha.className = "amort-linha";
+    linha.innerHTML = `
+        <span class="amort-num"></span>
+        <div class="entrada"><input id="amortData${id}" class="amort-data" type="date"></div>
+        <div class="entrada"><input id="amortValor${id}" class="amort-valor" type="text" inputmode="decimal" data-mascara="moeda" placeholder="0,00"></div>
+        <button type="button" class="amort-remover" onclick="removerAmortizacao(this)" aria-label="Remover amortização">&times;</button>
+        <div class="amort-status"></div>`;
+    document.getElementById("listaAmortizacoes").appendChild(linha);
+    const data = linha.querySelector(".amort-data");
+    if(typeof dataInicial === "string") data.value = dataInicial;
+    linha.querySelectorAll("input").forEach(el => {
+        el.addEventListener("input", resetarResultados);
+        el.addEventListener("change", resetarResultados);
+        if(window.prepararCampoInterface) window.prepararCampoInterface(el);
+    });
+    renumerarAmortizacoes();
+    atualizarStatusAmortizacoes();
+    return linha;
+}
+
+function removerAmortizacao(botao){
+    if(linhasAmortizacao().length <= 1) return;
+    botao.closest(".amort-linha").remove();
+    renumerarAmortizacoes();
+    resetarResultados();
+}
+
+function linhaTabela(classe, posicao, data, capital, juros, parcela, saldo){
+    return `<tr${classe ? ` class="${classe}"` : ""}>
+        <td>${posicao}</td>
+        <td>${data.toLocaleDateString('pt-BR')}</td>
+        <td>${formatReal(capital)}</td>
+        <td>${formatReal(juros)}</td>
+        <td>${formatReal(parcela)}</td>
+        <td>${formatReal(saldo)}</td>
+    </tr>`;
+}
+
+function renderizarTabela(){
+    if(!ultimoResultado) return;
+    const { am } = ultimoResultado;
+    tabela.innerHTML = am.linhas.map(l => l.amort
+        ? linhaTabela("amort-row", `Amort. ${l.slot}`, l.data, l.H, l.J, l.L, l.N)
+        : linhaTabela(l.carencia ? "carencia-row" : "", l.E, l.data, l.H, l.J, l.L, l.N)
+    ).join("");
+}
+
+// ================= Operação Original (sem amortização) =================
+
+let mostrarOriginal = false;
+
+function taxaMensalOperacao(p){
+    // J7: NETWORKDAYS(01/MM/AAAA, fim do mês da liberação) - 1
+    const primeiroDiaMes = new Date(p.d0.getFullYear(), p.d0.getMonth(), 1);
+    const ultimoDiaMes = new Date(p.d0.getFullYear(), p.d0.getMonth() + 1, 0);
+    const duTaxa = Math.max(networkdays(primeiroDiaMes, ultimoDiaMes) - 1, 1);
+    return (((1 + p.tms) * (1 + p.st)) ** (duTaxa / 252)) - 1;
+}
+
+function renderizarOperacaoOriginal(){
+    if(!ultimoResultado) return;
+    const { orig, p } = ultimoResultado;
+
+    const totalParcelas = orig.linhas.slice(1).reduce((s, l) => s + l.I, 0);
+    const fluxos = [{ data:orig.datas[0], valor:-orig.totalLiquido }]
+        .concat(orig.linhas.slice(1).map(l => ({ data:l.data, valor:l.I })));
+    const cetAnual = calcularXIRR(fluxos);
+    const cetMensal = cetAnual === null ? null : ((1 + cetAnual) ** (1 / 12)) - 1;
+
+    const campos = [
+        { label:"Valor", value:formatReal(p.valor) },
+        { label:"Taxa Mensal", value:`${(taxaMensalOperacao(p) * 100).toFixed(2)}% a.m.` },
+        { label:"Liberação", value:p.d0.toLocaleDateString('pt-BR') },
+        { label:"Data Base", value:p.base },
+        { label:"Carência", value:orig.E5 },
+        { label:"Prazo Total", value:orig.E6 },
+        { label:"Seguro Parcela", value:formatReal(orig.parcelaSeguro) },
+        { label:"Seguro Total", value:formatReal(orig.totalSeguro) },
+        { label:"IOF Total", value:formatReal(orig.iofDiario + orig.iofAdicional) },
+        { label:"Despesa Tot.", value:formatReal(orig.despesaTotal) },
+        { label:"Total Líq.", value:formatReal(orig.totalLiquido) },
+        { label:"Juros na Carência", value:p.jurosCarencia ? "SIM" : "NÃO" },
+        { label:"CET Mensal", value:cetMensal === null ? "N/A" : `${(cetMensal * 100).toFixed(2)}% a.m.` },
+        { label:"CET Anual", value:cetAnual === null ? "N/A" : `${(cetAnual * 100).toFixed(2)}% a.a.` },
+        { label:"Total Pagar", value:formatReal(totalParcelas + orig.despesaTotal) }
+    ];
+    const linhasResumo = [];
+    for(let i = 0; i < campos.length; i += 4) linhasResumo.push(campos.slice(i, i + 4));
+    document.getElementById("resumoOriginal").innerHTML = linhasResumo.map(linha =>
+        `<div class="resumo-row">${linha.map(c => `<div class="resumo-item"><span>${c.label}</span><span>${c.value}</span></div>`).join("")}</div>`
+    ).join("");
+
+    const l0 = orig.linhas[0];
+    const linhas = [linhaTabela("", "Liberação", l0.data, 0, 0, 0, l0.K)];
+    orig.linhas.slice(1).forEach(l => {
+        linhas.push(linhaTabela(l.n <= orig.E5 ? "carencia-row" : "", l.n, l.data, l.F, l.G, l.I, l.K));
+    });
+    document.getElementById("tabelaOriginal").innerHTML = linhas.join("");
+}
+
+function atualizarVisibilidadeOriginal(){
+    const secao = document.getElementById("operacaoOriginal");
+    const visivel = mostrarOriginal && !!ultimoResultado;
+    secao.hidden = !visivel;
+    if(visivel) renderizarOperacaoOriginal();
+}
+
+function alternarOperacaoOriginal(){
+    mostrarOriginal = document.getElementById("switchOriginal").checked;
+    atualizarVisibilidadeOriginal();
+    if(mostrarOriginal && ultimoResultado){
+        document.getElementById("operacaoOriginal").scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+}
+
+let ultimoResultado = null;
+
+function calcular(){
+    if(!dadosCompartilhadosCarregados || !tmsDadosCarregados){
+        alert("Aguarde o carregamento dos dados compartilhados.");
+        return;
+    }
+
+    const p = lerParametros();
+    const erro = validarParametros(p);
+    if(erro){
+        alert(erro);
+        return;
+    }
+
+    let orig, am;
+    try {
+        orig = calcularOperacaoOriginal(p);
+        am = calcularAmortizacao(orig, p);
+    } catch(e){
+        alert(e.message);
+        return;
+    }
+    ultimoResultado = { orig, am, p };
+    renderizarTabela();
+    atualizarVisibilidadeOriginal();
+
+    const textoCetMensal = am.cetMensal === null ? "N/A" : `${(am.cetMensal * 100).toFixed(2)}% a.m.`;
+    const textoCetAnual = am.cetAnual === null ? "N/A" : `${(am.cetAnual * 100).toFixed(2)}% a.a.`;
+
+    renderizarResumo([
+        { key:"valor", label:"Valor", value:formatReal(p.valor) },
+        { key:"taxaMensal", label:"Taxa Mensal¹", value:`${(taxaMensalOperacao(p) * 100).toFixed(2)}% a.m.` },
+        { key:"liberacao", label:"Liberação", value:formatDateBR(dataLiberacaoInput.value) },
+        { key:"dataBase", label:"Data Base", value:dataBaseInput.value },
+        { key:"carencia", label:p.jurosCarencia ? "Carência³" : "Carência", value:orig.E5 },
+        { key:"prazoTotal", label:"Prazo Total", value:orig.E6 },
+        { key:"seguroParcela", label:"Seguro Parcela", value:formatReal(orig.parcelaSeguro) },
+        { key:"seguroTotal", label:"Seguro Total", value:formatReal(orig.totalSeguro) },
+        { key:"iofTotal", label:"IOF Total", value:formatReal(orig.iofDiario + orig.iofAdicional) },
+        { key:"despesaTotal", label:"Despesa Tot.²", value:formatReal(orig.despesaTotal) },
+        { key:"totalLiquido", label:"Total Líq.", value:formatReal(orig.totalLiquido) },
+        { key:"totalAmortizado", label:"Total Amortizado", value:formatReal(am.totalAmortizado) },
+        { key:"reducaoJuros", label:"Redução de Juros⁶", value:formatReal(am.reducaoJuros) },
+        { key:"cetMensal", label:"CET Mensal", value:textoCetMensal },
+        { key:"cetAnual", label:"CET Anual", value:textoCetAnual },
+        { key:"totalPagar", label:"Total Pagar⁵", value:formatReal(am.totalPagar) }
+    ]);
+
+    const itensDespesa = p.seguro ? "IOF e Prestamista" : "IOF";
+    const legendaCarencia = p.jurosCarencia ? "³Carência apenas do Capital;<br>" : "";
+    const legendaParcela = p.seguro ? "⁴Inclui valor da parcela do prestamista;<br>" : "";
+
+    rodapeSimulacao.innerHTML = `
+    ¹Valor depende da quantidade de dias úteis entre as datas-base e TMS (${cdi.value}% a.a. atualmente);<br>
+    ²Descontado na data de liberação. Inclui valores de ${itensDespesa};<br>
+    ${legendaCarencia}
+    ${legendaParcela}
+    ⁵Inclui as parcelas, as amortizações e as despesas da contratação;<br>
+    ⁶Diferença entre o total das parcelas da operação sem amortização e com as amortizações informadas.
+
+    <h3>AMORTIZAÇÃO</h3>
+    <p>IN 590: permitido apenas amortização do tipo proporcional. Após cada amortização, o capital das próximas parcelas é recalculado dividindo o saldo devedor de capital pela quantidade de parcelas restantes.</p>
+    <p>Nas linhas de amortização, os juros apurados até a data são cobrados na parcela seguinte.</p>
+
+    <h3>OBSERVAÇÕES</h3>
+    <p>A presente simulação não possui caráter de proposta financeira vinculante ou de estruturação de negócio.</p>
+    <p>As condições apresentadas, em especial a taxa de juros, o prazo e o valor das despesas, poderão ser alteradas sem aviso prévio. Valores sujeitos à variação da SELIC.</p>
+    <p>Na simulação do cálculo do IOF foi considerada a alíquota padrão para operações com Pessoa Jurídica.</p>
+    <p>O Valor apresentado para seguro prestamista é uma aproximação, podendo variar a depender da data de liberação e dia base das parcelas.</p>
+    <p>As propostas de operações de crédito estão sujeitas a prévia análise e aprovação pelo Banco do Brasil.</p>
+    `;
+
+    resultadosValidos = true;
+    if(btnPrint) btnPrint.disabled = false;
+}
+
+function resetarResultados(){
+    atualizarStatusAmortizacoes();
+    if(resultadosValidos){
+        resultadosValidos = false;
+        ultimoResultado = null;
+        tabela.innerHTML = "";
+        resumo.innerHTML = `<p style='color:#b2202f;font-weight:700;'>Alguns dados foram alterados. Clique em Calcular novamente para atualizar a simulação.</p>`;
+        rodapeSimulacao.innerHTML = "";
+        atualizarVisibilidadeOriginal();
+        if(btnPrint) btnPrint.disabled = true;
+    }
+}
+
+// INPUTS
+const valorInput = document.getElementById("valor");
+const prazoInput = document.getElementById("prazo");
+const carenciaInput = document.getElementById("carencia");
+const dataBaseInput = document.getElementById("dataBase");
+const dataLiberacaoInput = document.getElementById("dataLiberacao");
+const cdi = document.getElementById("cdi");
+const st = document.getElementById("st");
+const jurosCarenciaSelect = document.getElementById("jurosCarencia");
+const iofDiarioInput = document.getElementById("iofDiario");
+const iofAdicionalInput = document.getElementById("iofAdicional");
+const seguroSelect = document.getElementById("seguro");
+const sociosInput = document.getElementById("socios");
+const sociosContainer = document.getElementById("sociosContainer");
+const parcelaHeader = document.getElementById("parcelaHeader");
+const tabela = document.getElementById("tabela");
+const resumo = document.getElementById("resumo");
+const rodapeSimulacao = document.getElementById("rodapeSimulacao");
+const btnPrint = document.getElementById("btnPrint");
+
+let resultadosValidos = false;
+let resumoCamposAtuais = [];
+
+function getCamposSelecionadosResumo(){
+    return new Set(Array.from(document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]:checked')).map(input => input.dataset.resumoCampo));
+}
+
+function atualizarFiltroCamposDisponiveis(){
+    const chavesDisponiveis = new Set(resumoCamposAtuais.map(campo => campo.key));
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        const option = input.closest('.filter-option');
+        if(option){
+            option.style.display = chavesDisponiveis.has(input.dataset.resumoCampo) ? "" : "none";
+        }
+    });
+}
+
+function renderizarResumo(campos){
+    resumoCamposAtuais = campos;
+    atualizarFiltroCamposDisponiveis();
+    const selecionados = getCamposSelecionadosResumo();
+    const linhas = [];
+    for(let i = 0; i < campos.length; i += 4){
+        const camposLinha = campos.slice(i, i + 4).filter(campo => selecionados.has(campo.key));
+        if(camposLinha.length){
+            linhas.push(camposLinha);
+        }
+    }
+    resumo.innerHTML = `
+    <h3>Resumo</h3>
+    <div class="resumo-grid resumo-grid-linhas">
+        ${linhas.map(linha => `<div class="resumo-row">${linha.map(campo => `<div class="resumo-item" data-resumo-campo="${campo.key}"><span>${campo.label}</span><span>${campo.value}</span></div>`).join("")}</div>`).join("")}
+    </div>
+    `;
+}
+
+function marcarTodosCamposResumo(marcado){
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        const option = input.closest('.filter-option');
+        if((!option || option.style.display !== "none") && !input.disabled){
+            input.checked = marcado;
+        }
+    });
+    if(resultadosValidos && resumoCamposAtuais.length){
+        renderizarResumo(resumoCamposAtuais);
+    }
+}
+
+function atualizarFiltrosSeguro(){
+    const usarSeguro = seguroSelect.checked;
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        if(input.dataset.resumoCampo === "seguroTotal" || input.dataset.resumoCampo === "seguroParcela"){
+            input.disabled = !usarSeguro;
+            input.checked = usarSeguro;
+        }
+    });
+    if(resultadosValidos && resumoCamposAtuais.length){
+        renderizarResumo(resumoCamposAtuais);
+    }
+}
+
+function bindFiltroCamposResumo(){
+    document.querySelectorAll('#filtroCamposResumo input[type="checkbox"]').forEach(input => {
+        input.checked = true;
+        input.addEventListener("change", () => {
+            if(resultadosValidos && resumoCamposAtuais.length){
+                renderizarResumo(resumoCamposAtuais);
+            }
+        });
+    });
+}
+
+function inicializarDatas(){
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const liberacao = new Date(hoje.getFullYear() - 1, hoje.getMonth(), hoje.getDate() - 15);
+    dataLiberacaoInput.value = formatDateLocal(liberacao);
+    dataBaseInput.value = liberacao.getDate();
+    adicionarAmortizacao(formatDateLocal(hoje));
+}
+
+function atualizarDataBase(){
+    const val = dataLiberacaoInput.value;
+    if(val){
+        const parts = val.split('-');
+        if(parts.length === 3){
+            dataBaseInput.value = parseInt(parts[2], 10);
+        }
+    }
+}
+
+function atualizarSocios(){
+    const usarSeguro = seguroSelect.checked;
+    sociosContainer.style.visibility = usarSeguro ? "visible" : "hidden";
+    sociosContainer.style.pointerEvents = usarSeguro ? "auto" : "none";
+    parcelaHeader.textContent = usarSeguro ? "Parcela⁴" : "Parcela";
+    atualizarFiltrosSeguro();
+}
+
+function voltar(){
+    window.location.href = './index.html';
+}
+
+function bindResultsResetListeners(){
+    const campos = document.querySelectorAll('.dados-card input:not(.no-reset), .dados-card select');
+    campos.forEach(el => {
+        el.addEventListener('input', resetarResultados);
+        el.addEventListener('change', resetarResultados);
+    });
+}
+
+const printDateSpan = document.getElementById("printDate");
+function atualizarCabecalhoImpressao(){
+    if(printDateSpan){
+        printDateSpan.textContent = formatDateBR(new Date());
+    }
+}
+
+inicializarDatas();
+seguroSelect.addEventListener("change", atualizarSocios);
+dataLiberacaoInput.addEventListener("input", () => { atualizarDataBase(); resetarResultados(); });
+atualizarCabecalhoImpressao();
+bindResultsResetListeners();
+bindFiltroCamposResumo();
+window.onbeforeprint = atualizarCabecalhoImpressao;
+if(btnPrint) btnPrint.disabled = true;
+atualizarSocios();
+
+</script>
+
+<script>
+/* =====================================================================
+   CAMADA DE INTERFACE (v2) — não altera nenhum cálculo.
+   - Campos com data-mascara="moeda": exibem e entregam o valor em formato
+     brasileiro (como o script original já lê, via parseValor).
+   - Campos com data-mascara="moeda-num" ou "decimal-num": exibem em formato
+     brasileiro, mas o script original continua recebendo o mesmo texto de
+     antes (ponto decimal), pois o .value desses campos é traduzido.
+   ===================================================================== */
+(function(){
+    const nativo = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    const lerTela = campo => nativo.get.call(campo);
+    const gravarTela = (campo, texto) => nativo.set.call(campo, texto);
+
+    function casasDe(campo){
+        return campo.dataset.mascara.startsWith("moeda") ? 2 : parseInt(campo.dataset.casas || "4", 10);
+    }
+    function agrupar(inteiro){
+        return inteiro.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    function formatarDigitado(texto, casas){
+        texto = texto.replace(/[^\d,]/g, "");
+        const pos = texto.indexOf(",");
+        let inteiro = pos >= 0 ? texto.slice(0, pos) : texto;
+        const decimal = pos >= 0 ? texto.slice(pos + 1).replace(/,/g, "").slice(0, casas) : null;
+        inteiro = agrupar(inteiro);
+        if(inteiro === "" && decimal !== null) inteiro = "0";
+        return decimal !== null ? `${inteiro},${decimal}` : inteiro;
+    }
+    function lerNumeroTela(campo){
+        const t = lerTela(campo).trim();
+        if(t === "") return NaN;
+        return parseFloat(t.replace(/\./g, "").replace(",", "."));
+    }
+    // valor no formato do script (ponto decimal) -> texto exibido
+    function paraTela(campo, valor){
+        if(valor === null || valor === undefined) return "";
+        const s = String(valor).trim();
+        if(s === "" || isNaN(Number(s))) return s;
+        if(campo.dataset.mascara === "moeda-num"){
+            return Number(s).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+        }
+        const negativo = s.startsWith("-");
+        const [inteiro, decimal] = s.replace("-", "").split(".");
+        return (negativo ? "-" : "") + agrupar(inteiro) + (decimal !== undefined ? "," + decimal : "");
+    }
+    // texto exibido -> formato que o script original sempre recebeu
+    function paraScript(campo){
+        const t = lerTela(campo).trim();
+        return t === "" ? "" : t.replace(/\./g, "").replace(",", ".");
+    }
+
+    document.querySelectorAll('input[data-mascara$="-num"]').forEach(campo => {
+        const atual = lerTela(campo);
+        Object.defineProperty(campo, "value", {
+            configurable: true,
+            get(){ return paraScript(campo); },
+            set(v){ gravarTela(campo, paraTela(campo, v)); }
+        });
+        gravarTela(campo, paraTela(campo, atual));
+    });
+
+    function aplicarMascara(campo, evento){
+        const casas = casasDe(campo);
+        let original = lerTela(campo);
+        const cursor = campo.selectionStart ?? original.length;
+        if(evento && evento.data === "." && cursor > 0 && original[cursor - 1] === "."){
+            original = original.slice(0, cursor - 1) + "," + original.slice(cursor);
+        }
+        const relevantesAntes = original.slice(0, cursor).replace(/[^\d,]/g, "").length;
+        const formatado = formatarDigitado(original, casas);
+        if(formatado === lerTela(campo)) return;
+        gravarTela(campo, formatado);
+        let pos = 0, contados = 0;
+        while(pos < formatado.length && contados < relevantesAntes){
+            if(/[\d,]/.test(formatado[pos])) contados++;
+            pos++;
+        }
+        campo.setSelectionRange(pos, pos);
+    }
+
+    function completarMoeda(campo){
+        if(!campo.dataset.mascara || !campo.dataset.mascara.startsWith("moeda")) return;
+        const n = lerNumeroTela(campo);
+        if(isNaN(n)) return;
+        gravarTela(campo, n.toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 }));
+    }
+
+    // Ao clicar, o campo é limpo para nova digitação; o valor anterior fica como dica
+    // e volta se o campo for deixado em branco.
+    function prepararCampo(campo){
+        if(campo.type === "checkbox" || campo.type === "date") return;
+        campo.addEventListener("focus", () => {
+            if(campo.readOnly || campo.disabled) return;
+            campo.dataset.anterior = lerTela(campo);
+            campo.dataset.placeholderOriginal = campo.getAttribute("placeholder") || "";
+            campo.setAttribute("placeholder", lerTela(campo) || campo.dataset.placeholderOriginal);
+            gravarTela(campo, "");
+        });
+        campo.addEventListener("blur", () => {
+            if(campo.dataset.anterior === undefined) return;
+            if(lerTela(campo).trim() === "") gravarTela(campo, campo.dataset.anterior);
+            completarMoeda(campo);
+            campo.setAttribute("placeholder", campo.dataset.placeholderOriginal || "");
+            delete campo.dataset.anterior;
+        });
+        if(campo.dataset.mascara){
+            campo.addEventListener("input", evento => aplicarMascara(campo, evento));
+        }
+    }
+    window.prepararCampoInterface = prepararCampo;
+    document.querySelectorAll(".dados-card input").forEach(prepararCampo);
+
+    // Fecha o painel "Campos do resumo" ao clicar fora dele
+    document.addEventListener("click", evento => {
+        const filtro = document.getElementById("filtroCamposResumo");
+        if(filtro && filtro.open && !filtro.contains(evento.target)) filtro.open = false;
+    });
+
+    // Regras FBA: esmaece faixas que não comportam o prazo/carência informados
+    const linhasFba = document.querySelectorAll(".fba-linha[data-prazo-max]");
+    const campoPrazo = document.getElementById("prazo");
+    const campoCarencia = document.getElementById("carencia");
+    const aviso = document.getElementById("fbaAviso");
+    function atualizarRegrasFba(){
+        const prazo = parseInt(lerTela(campoPrazo), 10);
+        const carencia = parseInt(lerTela(campoCarencia), 10);
+        let todasFora = true, algumaFora = false;
+        linhasFba.forEach(linha => {
+            const prazoOk = isNaN(prazo) || prazo <= Number(linha.dataset.prazoMax);
+            const carenciaOk = isNaN(carencia) || (carencia >= Number(linha.dataset.carenciaMin) && carencia <= Number(linha.dataset.carenciaMax));
+            const dentro = prazoOk && carenciaOk;
+            linha.classList.toggle("fora", !dentro);
+            if(dentro) todasFora = false; else algumaFora = true;
+        });
+        if(aviso){
+            aviso.textContent = todasFora ? "Prazo/carência informados não se enquadram em nenhuma faixa."
+                : (algumaFora ? "Faixas esmaecidas não comportam o prazo/carência informados." : "");
+        }
+    }
+    if(linhasFba.length && campoPrazo && campoCarencia){
+        ["input", "blur"].forEach(ev => {
+            campoPrazo.addEventListener(ev, atualizarRegrasFba);
+            campoCarencia.addEventListener(ev, atualizarRegrasFba);
+        });
+        atualizarRegrasFba();
+    }
+})();
+</script>
+
+</body>
+</html>
