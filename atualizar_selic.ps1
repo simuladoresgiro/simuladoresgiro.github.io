@@ -1,8 +1,8 @@
-﻿<#
+<#
     ATUALIZAÇÃO AUTOMÁTICA DA TAXA DE REFERÊNCIA (CDI.json e TMS.json)
     ------------------------------------------------------------------
-    Consulta a Meta Selic definida pelo Copom na API oficial do Banco Central
-    (SGS, série 432 — mesma informação de bcb.gov.br/controleinflacao/historicotaxasjuros)
+    Consulta a Meta Selic definida pelo Copom no Banco Central (mesmos dados da página
+    bcb.gov.br/controleinflacao/historicotaxasjuros; alternativa: SGS, série 432)
     e, se houver nova Meta Selic, atualiza "taxasReferencia" nos dois arquivos:
         - a faixa vigente (dataFinal = null) é encerrada no dia anterior ao início da nova;
         - é incluída uma nova faixa vigente com taxaAnual = Meta Selic - 0,10.
@@ -46,32 +46,89 @@ function Ler-FaixaVigente([string]$texto, [string]$nome){
     return $m[0]
 }
 
-try {
-    # ---- 1. Meta Selic (série 432) dos últimos 400 dias
-    if($DadosApi){
-        $serie = Get-Content $DadosApi -Raw -Encoding UTF8 | ConvertFrom-Json
-    } else {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $ini = (Get-Date).AddDays(-400).ToString("dd/MM/yyyy")
-        $fim = (Get-Date).ToString("dd/MM/yyyy")
-        $url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=$ini&dataFinal=$fim"
-        $serie = $null
-        for($t = 1; $t -le 3 -and -not $serie; $t++){
-            try { $serie = Invoke-RestMethod -Uri $url -TimeoutSec 60 } catch { if($t -eq 3){ throw } ; Start-Sleep -Seconds 20 }
-        }
-    }
-    if(-not $serie -or $serie.Count -eq 0){ throw "API do Banco Central não retornou dados." }
+# ---- Fontes da Meta Selic (Banco Central)
+#   1. Histórico das taxas de juros (mesmos dados da página bcb.gov.br/controleinflacao/historicotaxasjuros)
+#   2. SGS, série 432 - Meta Selic definida pelo Copom (alternativa, caso a primeira falhe)
+$UrlHistorico = "https://www.bcb.gov.br/api/servico/sitebcb/historicotaxasjuros"
 
-    # Períodos de vigência: cada mudança de valor inicia um novo período
-    $periodos = @()
-    $anterior = $null
-    foreach($item in $serie){
-        $valor = [decimal]::Parse(([string]$item.valor).Replace(",", "."), $Inv)
-        if($anterior -eq $null -or $valor -ne $anterior){
-            $periodos += [pscustomobject]@{ Inicio = [datetime]::ParseExact($item.data, "dd/MM/yyyy", $Inv); Selic = $valor }
-            $anterior = $valor
+function Resumir([string]$texto){
+    $t = ($texto -replace "\s+", " ").Trim()
+    if($t.Length -gt 200){ $t = $t.Substring(0, 200) + "..." }
+    return "'" + $t + "'"
+}
+
+# Baixa o conteúdo (texto) de uma URL, com até 3 tentativas
+function Baixar([string]$url){
+    $erro = ""
+    for($t = 1; $t -le 3; $t++){
+        try {
+            $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 60 -Headers @{ Accept = "application/json" }
+            return [string]$r.Content
+        } catch {
+            $erro = $_.Exception.Message
+            if($t -lt 3){ Start-Sleep -Seconds 15 }
         }
     }
+    throw $erro
+}
+
+function Data-Iso($valor){
+    # "2026-11-05T03:00:00Z" (03:00 UTC = 00:00 em Brasília). O PowerShell 7 pode já converter para DateTime.
+    if($valor -is [datetime]){ return $valor.ToUniversalTime().AddHours(-3).Date }
+    return [datetime]::ParseExact(([string]$valor).Substring(0, 10), "yyyy-MM-dd", $Inv)
+}
+
+# Converte a resposta em períodos de vigência: [{ Inicio, Selic }], em ordem de data
+function Ler-Periodos([string]$conteudo){
+    try { $json = $conteudo | ConvertFrom-Json } catch { throw "resposta não é JSON: $(Resumir $conteudo)" }
+    $itens = @()
+    if($json -isnot [array] -and $json.PSObject.Properties["conteudo"]){
+        # Histórico das taxas de juros: uma linha por reunião do Copom
+        foreach($r in @($json.conteudo)){
+            if($r.DataInicioVigencia -and $r.MetaSelic -ne $null){
+                $itens += [pscustomobject]@{ Inicio = (Data-Iso $r.DataInicioVigencia); Selic = [decimal]::Parse(([string]$r.MetaSelic).Replace(",", "."), $Inv) }
+            }
+        }
+    } else {
+        # SGS: uma linha por dia
+        $hoje = (Get-Date).Date
+        foreach($r in @($json)){
+            if($r.data -and $r.valor){
+                $d = [datetime]::ParseExact([string]$r.data, "dd/MM/yyyy", $Inv)
+                if($d -le $hoje){ $itens += [pscustomobject]@{ Inicio = $d; Selic = [decimal]::Parse(([string]$r.valor).Replace(",", "."), $Inv) } }
+            }
+        }
+    }
+    if($itens.Count -eq 0){ throw "formato inesperado: $(Resumir $conteudo)" }
+    # Ordena e junta períodos seguidos com a mesma taxa
+    $periodos = @()
+    foreach($i in ($itens | Sort-Object Inicio)){
+        if($periodos.Count -eq 0 -or $periodos[-1].Selic -ne $i.Selic){ $periodos += $i }
+    }
+    return ,$periodos
+}
+
+function Obter-Periodos(){
+    if($DadosApi){ return @{ Periodos = (Ler-Periodos (Get-Content $DadosApi -Raw -Encoding UTF8)); Fonte = "arquivo de teste" } }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $ini = (Get-Date).AddDays(-400).ToString("dd/MM/yyyy")
+    $fim = (Get-Date).ToString("dd/MM/yyyy")
+    $fontes = @(
+        @{ Nome = "BCB histórico das taxas de juros"; Url = $UrlHistorico },
+        @{ Nome = "BCB SGS série 432"; Url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=$ini&dataFinal=$fim" }
+    )
+    $falhas = @()
+    foreach($f in $fontes){
+        try { return @{ Periodos = (Ler-Periodos (Baixar $f.Url)); Fonte = $f.Nome } }
+        catch { $falhas += "$($f.Nome): $($_.Exception.Message)" }
+    }
+    throw ("Não foi possível obter a Meta Selic. " + ($falhas -join " | "))
+}
+
+try {
+    # ---- 1. Meta Selic: períodos de vigência
+    $obtido = Obter-Periodos
+    $periodos = $obtido.Periodos
     $atual = $periodos[-1]
 
     # ---- 2. Atualiza cada arquivo
@@ -127,8 +184,8 @@ try {
     }
 
     if(-not $houveAlteracao){
-        Registrar ("Sem alteração. Meta Selic vigente: {0}% desde {1} (referência {2}% a.a.)." -f `
-            $atual.Selic.ToString("0.00", $Inv), $atual.Inicio.ToString("dd/MM/yyyy"), ($atual.Selic - $Spread).ToString("0.####", $Inv))
+        Registrar ("Sem alteração. Meta Selic vigente: {0}% desde {1} (referência {2}% a.a.). Fonte: {3}." -f `
+            $atual.Selic.ToString("0.00", $Inv), $atual.Inicio.ToString("dd/MM/yyyy"), ($atual.Selic - $Spread).ToString("0.####", $Inv), $obtido.Fonte)
     } elseif($Testar){
         Write-Output "(modo teste: nenhum arquivo foi gravado)"
     }
