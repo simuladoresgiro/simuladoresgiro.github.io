@@ -883,10 +883,10 @@ function calcularProrrogacao(orig, p){
         const F = carencia ? 0 : ant.J / (F6 - n + 1);
         let G, X;
         if(primeira){
-            // CDI capitaliza sobre o saldo com juros (K14); prefixado sobre o saldo da última parcela (K13)
+            // CDI capitaliza sobre o saldo com juros (K14); prefixado sobre o saldo de capital (J14)
             G = p.tipo === "cdi"
                 ? jurosPeriodo(ant.K, ant.data, data, p)
-                : l13.K * p.pre * difDias(ant.data, data) / 30;
+                : jurosPeriodo(ant.J, ant.data, data, p);
             X = carencia ? G + G14 : G + G14 + F;
         } else {
             G = jurosPeriodo(ant.K, ant.data, data, p);
