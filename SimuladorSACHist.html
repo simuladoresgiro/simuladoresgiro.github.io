@@ -943,11 +943,8 @@ function calcular(){
         );
         const jurosPeriodo = saldoDevedor * fatorJuros;
         const iofParcelaAtual = iofFinanciado ? iofFinanciadoPorParcela[i] || 0 : 0;
-        const usaCdiHistorico = data <= obterDataMaximaIndice();
-        const iofParcelaAdicional = iofFinanciado && usaCdiHistorico && i + 1 > car + 1
-            ? iofParcelaAtual
-            : 0;
-        const jurosComIof = jurosPeriodo + iofParcelaAtual + iofParcelaAdicional;
+        // IOF financiado: cobrado uma única vez em cada parcela após a carência (coluna G corrigida)
+        const jurosComIof = jurosPeriodo + iofParcelaAtual;
 
         let capitalParcela = (i+1 <= car) ? 0 : valor / amortFinanceiro;
         let parcelaTotal = jurosComIof + capitalParcela;
