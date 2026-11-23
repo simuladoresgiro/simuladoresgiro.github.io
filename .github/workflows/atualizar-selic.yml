@@ -1,0 +1,35 @@
+# Verifica diariamente a Meta Selic (Banco Central, SGS série 432) e, se houver
+# alteração, atualiza "taxasReferencia" em CDI.json e TMS.json e publica no site.
+name: Atualizar Selic
+
+on:
+  schedule:
+    - cron: "0 11 * * *"     # todo dia às 08:00 (horário de Brasília = 11:00 UTC)
+  workflow_dispatch:          # permite rodar manualmente pela aba Actions
+
+permissions:
+  contents: write             # necessário para gravar CDI.json e TMS.json no repositório
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Verificar a Meta Selic e atualizar os arquivos
+        shell: pwsh
+        run: ./atualizar_selic.ps1
+
+      - name: Gravar a alteração no repositório
+        shell: bash
+        run: |
+          if git diff --quiet -- CDI.json TMS.json; then
+            echo "Sem alteração da Selic."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CDI.json TMS.json
+          git commit -m "Atualiza taxa de referência (Meta Selic)"
+          git push
