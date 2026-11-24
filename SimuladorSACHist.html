@@ -914,6 +914,8 @@ function calcular(){
         iofAdicionalTotal = Math.round((totalIofFinanciado - totalIofDiario) * 100) / 100;
         if(iofAdicionalTotal < 0) iofAdicionalTotal = 0;
         totalIOF = iofAdicionalTotal;
+        // Flat em percentual: com IOF financiado, incide sobre o valor + IOF
+        if(flatUnidade !== "real") comissaoFlat = (valor + totalIofFinanciado) * (flatValorInputValue / 100);
 
         // O limite de 365 dias restringe somente o IOF diario calculado.
         // O IOF financiado total continua sendo rateado por todas as amortizacoes.
