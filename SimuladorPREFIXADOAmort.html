@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Prefixado (SAC) · Amortizações</title>
+<title>Prefixado (SAC / PRICE) · Amortizações</title>
 <style>
 /* ================= Tokens ================= */
 :root {
@@ -337,7 +337,7 @@ button.filter-action:hover { background:var(--azul-50); }
 <header class="topo">
     <div>
         <div class="trilha">Amortizações › Linha Digital</div>
-        <h1>Prefixado (SAC)</h1>
+        <h1>Prefixado (SAC / PRICE)</h1>
     </div>
     <span class="chip">Simulação de amortização</span>
 </header>
@@ -371,6 +371,10 @@ button.filter-action:hover { background:var(--azul-50); }
 <div class="field">
     <label for="prazo">Prazo total</label>
     <div class="entrada com-sufixo"><input id="prazo" type="number" value="25"><span class="sufixo">meses</span></div>
+</div>
+<div id="sistemaContainer" class="field">
+    <label for="sistema">Sistema de reposição</label>
+    <div class="entrada"><select id="sistema"><option value="sac">SAC</option><option value="price">PRICE</option></select></div>
 </div>
 </div>
 </div>
@@ -428,7 +432,7 @@ button.filter-action:hover { background:var(--azul-50); }
 </div>
 </div>
 </div>
-<p class="nota-campos">Valor da flat: R$ 100,00 ou 0,01% a 5,00%.</p><p class="nota-campos">Amortização permitida apenas para o sistema de reposição SAC.</p>
+<p class="nota-campos">Valor da flat: R$ 100,00 ou 0,01% a 5,00%.</p><p class="nota-campos">IOF financiado: apenas SAC. PRICE com data base menor que o dia da contratação exige pelo menos 1 mês de carência.</p>
     </div>
 </section>
 
@@ -639,10 +643,10 @@ function difDias(d1, d2){
 
 // ================= Aba PREFIXADO(SAC-PRICE), sistema SAC (operação sem amortização) =================
 
-// Datas das parcelas (coluna B), mesma regra do SimuladorPREFIXADO.html para o SAC
-function gerarDatasPrefixado(d0, base, prazo){
+// Datas das parcelas (coluna B), mesma regra do SimuladorPREFIXADO.html
+function gerarDatasPrefixado(d0, base, prazo, sistema){
     const datas = [];
-    const firstMonthOffset = base < d0.getDate() ? 2 : 1;
+    const firstMonthOffset = (sistema !== "price" && base < d0.getDate()) ? 2 : 1;
     let genCount = 0;
     while(datas.length < prazo){
         genCount++;
@@ -683,11 +687,24 @@ function jurosPrimeiroPeriodo(baseCalculo, taxa, d0, base, data){
     return j1 + j2;
 }
 
+// PRICE invertido (SimuladorPREFIXADO / planilha): parcela constante PMT nas parcelas após a carência;
+// a parcela j (j = 1..N, contada após a carência) tem capital = PMT x v^j e juros = PMT - capital,
+// com v = 1/(1+taxa). O capital é decrescente e os juros crescentes, e a soma dos capitais é o valor.
+function parcelaPrice(valor, taxa, N){
+    const qn = Math.pow(1 + taxa, N);
+    return qn > 1 ? valor * (taxa * qn) / (qn - 1) : valor / N + valor * taxa;
+}
+
 function calcularOperacaoOriginal(p){
-    const { valor, prazo, car, base, d0, taxa, iofFinanciado, usarSeguro, seguroIntegral, numSocios } = p;
+    const { valor, prazo, car, base, d0, taxa, usarSeguro, seguroIntegral, numSocios, sistema } = p;
+    const price = sistema === "price";
+    const iofFinanciado = !price && p.iofFinanciado;          // IOF financiado: apenas SAC
     const amortFinanceiro = prazo - car;
-    const datas = gerarDatasPrefixado(d0, base, prazo);
-    const capital = i => (i + 1 <= car) ? 0 : valor / amortFinanceiro;      // coluna F
+    const datas = gerarDatasPrefixado(d0, base, prazo, sistema);
+    const PMT = price ? parcelaPrice(valor, taxa, amortFinanceiro) : 0;
+    const v = 1 / (1 + taxa);
+    const capital = i => (i + 1 <= car) ? 0
+        : (price ? PMT * Math.pow(v, i + 1 - car) : valor / amortFinanceiro);  // coluna F
 
     // IOF diário (coluna K): saldo anterior x alíquota x dias (limitado a 365 dias), arredondado a centavos.
     // Com IOF financiado, o saldo inclui o próprio IOF (cálculo iterativo da planilha).
@@ -745,9 +762,15 @@ function calcularOperacaoOriginal(p){
         const data = datas[i];
         const F = capital(i);
         const iofParcela = iofFinanciado && i + 1 > car ? iofP : 0;
-        const G = iofParcela + (i === 0
-            ? jurosPrimeiroPeriodo(valor + totalIofFinanciado, taxa, d0, base, data)
-            : saldo * taxa * difDias(datas[i - 1], data) / 30);
+        let G;
+        if(price){
+            // carência: juros simples por dias corridos; depois, juros = PMT - capital
+            G = (i + 1 <= car) ? saldo * taxa * difDias(i === 0 ? d0 : datas[i - 1], data) / 30 : PMT - F;
+        } else {
+            G = iofParcela + (i === 0
+                ? jurosPrimeiroPeriodo(valor + totalIofFinanciado, taxa, d0, base, data)
+                : saldo * taxa * difDias(datas[i - 1], data) / 30);
+        }
         const seguroAtual = (usarSeguro && !seguroIntegral && (i === 0 || i < prazo - 2)) ? seguroParcela : 0;
         const H = F + G + seguroAtual;
         saldo -= F + iofParcela;
@@ -764,7 +787,7 @@ function calcularOperacaoOriginal(p){
     const cetMensal = cetAnual === null ? null : ((1 + cetAnual) ** (1 / 12)) - 1;
 
     return {
-        E5: car, E6: prazo, datas: [cloneDate(d0)].concat(datas), linhas,
+        E5: car, E6: prazo, datas: [cloneDate(d0)].concat(datas), linhas, sistema, PMT,
         tac, comissaoFlat, totalIofDiario, iofAdicionalTotal, totalIofFinanciado, iofFinanciado,
         totalSeguro: totalSeguroValor, parcelaSeguro: seguroParcela, despesaTotal, totalLiquido,
         totalPagar: totalPago + despesaTotal, totalParcelas: totalPago, cetAnual, cetMensal, diasTotaisOp
@@ -840,6 +863,7 @@ function prepararAmortizacoes(orig, amortizacoes){
 //   - juros apurados na amortização entram no saldo e saem na parcela seguinte.
 //   H = capital | I = controle da amortização | J = juros (+IOF financiado) | K = parcela total | L = saldo devedor
 function calcularAmortizacao(orig, p){
+    if(p.sistema === "price") return calcularAmortizacaoPrice(orig, p);
     const prep = prepararAmortizacoes(orig, p.amortizacoes);
     if(prep.erros.length) throw new Error(prep.erros.join("\n"));
 
@@ -932,6 +956,114 @@ function calcularAmortizacao(orig, p){
              reducaoJuros: orig.totalParcelas - totalParcelas };
 }
 
+// ================= PRICE invertido: amortização (proposta, sem planilha de referência) =================
+// Na tabela do PRICE invertido, o capital da parcela j é o seu valor presente na data de referência
+// (fim da carência): PMT x v^j. Por isso o "saldo devedor" exibido é a soma desses valores presentes.
+// A amortização na data D é tratada pelo valor presente, à taxa do contrato, das parcelas restantes:
+//   tau = posição de D na contagem de parcelas após a carência (fração do período pelos dias corridos);
+//   valor presente em D da parcela j = P_j x v^(j - tau).
+//   - Proporcional: todas as parcelas restantes são reduzidas na mesma proporção (1 - X / VP),
+//     mantendo o prazo e a parcela constante (menor).
+//   - Crescente: o valor antecipa as próximas parcelas, em ordem de vencimento, pelo valor presente;
+//     a parcela parcialmente coberta é reduzida e as seguintes não mudam (o prazo efetivo diminui).
+//   Na linha da amortização: capital = X x v^tau (redução do saldo exibido) e juros = X - capital,
+//   de forma que a soma do capital continua igual ao valor da operação.
+//   Na carência (juros pagos mês a mês), a amortização abate o saldo pelo valor integral e os juros
+//   apurados até a data são cobrados na parcela seguinte, como no SAC.
+function calcularAmortizacaoPrice(orig, p){
+    const prep = prepararAmortizacoes(orig, p.amortizacoes);
+    if(prep.erros.length) throw new Error(prep.erros.join("\n"));
+
+    const crescente = p.tipoAmortizacao === "crescente";
+    const car = orig.E5, n = orig.E6, N = n - car;
+    const t = p.taxa, v = 1 / (1 + t);
+    const H9 = orig.parcelaSeguro;
+    const P = [0];                                    // P[j]: valor da parcela j (após a carência)
+    for(let j = 1; j <= N; j++) P.push(orig.PMT);
+    let S = p.valor;                                  // saldo durante a carência
+
+    function aplicar(X, tau, k){
+        const vp = P.reduce((s, pj, j) => j > k ? s + pj * Math.pow(v, j - tau) : s, 0);
+        if(X > vp + 0.005) return vp;
+        if(crescente){
+            let resto = X;
+            for(let j = k + 1; j <= N && resto > 1e-9; j++){
+                const custo = P[j] * Math.pow(v, j - tau);
+                if(resto >= custo - 1e-9){ resto -= custo; P[j] = 0; }
+                else { P[j] -= resto * Math.pow(1 + t, j - tau); resto = 0; }
+            }
+        } else {
+            const r = vp > 0 ? 1 - X / vp : 0;
+            for(let j = k + 1; j <= N; j++) P[j] *= r;
+        }
+        return null;
+    }
+
+    const linhas = [];
+    let ant = null;
+    function adicionarLinha(E, amort){
+        const primeira = ant === null;
+        const g = !!amort;
+        const gp = !primeira && ant.amort && ant.pendente;
+        const data = g ? cloneDate(amort.data) : orig.datas[E];
+        const dataAnt = primeira ? p.d0 : ant.data;
+        const Lant = primeira ? p.valor : ant.L;
+        const carencia = E <= car;
+        let H, J, K, L, pendente = false;
+
+        if(g && carencia){
+            // amortização na carência: abate o saldo; juros até a data cobrados na parcela seguinte
+            if(amort.valor > S + 0.005) throw new Error(`Amortização ${amort.slot}: o valor excede o saldo devedor na data (${formatReal(S)}).`);
+            J = S * t * difDias(dataAnt, data) / 30 + (gp ? ant.J : 0);
+            if(aplicar(amort.valor, 0, 0) !== null) throw new Error(`Amortização ${amort.slot}: o valor excede o saldo devedor na data.`);
+            S -= amort.valor;
+            H = amort.valor; K = amort.valor; pendente = true;
+            L = Lant - H + J - (gp ? ant.J : 0);
+        } else if(g){
+            // amortização após a carência: pelo valor presente das parcelas restantes
+            const k = E - 1 - car;
+            const dIni = orig.datas[E - 1], dFim = orig.datas[E];
+            const tau = k + difDias(dIni, data) / Math.max(difDias(dIni, dFim), 1);
+            const vp = aplicar(amort.valor, tau, k);
+            if(vp !== null) throw new Error(`Amortização ${amort.slot}: o valor excede o saldo devedor na data (valor presente das parcelas restantes: ${formatReal(vp)}).`);
+            H = amort.valor * Math.pow(v, tau);
+            J = amort.valor - H;
+            K = amort.valor;
+            L = Math.max(Lant - H, 0);
+        } else if(carencia){
+            J = S * t * difDias(dataAnt, data) / 30 + (gp ? ant.J : 0);
+            H = 0;
+            K = J + H9;
+            L = Lant - (gp ? ant.J : 0);
+        } else {
+            const j = E - car;
+            H = P[j] * Math.pow(v, j);
+            J = P[j] - H;
+            const ultimas = E === n - 1 || E === n;
+            K = P[j] + (ultimas && !primeira ? 0 : H9);
+            L = Math.max(Lant - H, 0);
+            if(L < 0.005) L = 0;
+        }
+        const linha = { E, data, amort: g, slot: g ? amort.slot : null, H, I: 0, J, K, L, pendente, carencia: !g && carencia };
+        linhas.push(linha);
+        ant = linha;
+    }
+
+    for(let E = 1; E <= n; E++){
+        (prep.porParcela.get(E) || []).forEach(amort => adicionarLinha(E, amort));
+        adicionarLinha(E, null);
+    }
+
+    const totalAmortizado = prep.validas.reduce((s, a) => s + a.valor, 0);
+    const totalParcelas = linhas.reduce((s, l) => s + l.K, 0);
+    const totalPagar = totalParcelas + orig.despesaTotal;
+    const fluxos = linhas.map(l => ({ valor: l.K, dias: diasCorridos(p.d0, l.data) }));
+    const cetAnual = calcularCetAnual(orig.totalLiquido, fluxos);
+    const cetMensal = cetAnual === null ? null : ((1 + cetAnual) ** (1 / 12)) - 1;
+    return { linhas, amortizacoes: prep.validas, totalAmortizado, totalPagar, cetAnual, cetMensal,
+             reducaoJuros: orig.totalParcelas - totalParcelas };
+}
+
 // ================= Interface =================
 
 function linhasAmortizacao(){
@@ -956,6 +1088,7 @@ function lerParametros(){
         base: parseInt(dataBaseInput.value, 10),
         d0: parseDateLocal(dataLiberacaoInput.value),
         taxa: parseFloat(preInput.value) / 100,
+        sistema: sistemaSelect.value,
         iofFinanciado: iofFinanciadoSelect.value === "true",
         usarSeguro,
         seguroIntegral: usarSeguro && tipoSeguroSelect.value === "integral",
@@ -978,6 +1111,7 @@ function validarParametros(p){
     if(p.base === 31) return "Data base 31 não é permitida.";
     if(p.prazo - p.car <= 0) return "Prazo deve ser maior que a carência.";
     if(isNaN(p.taxa) || p.taxa <= 0) return "Informe a Taxa Mensal Prefixada.";
+    if(p.sistema === "price" && p.base < p.d0.getDate() && p.car < 1) return "Para PRICE com data base menor que o dia da contratação, atribuir pelo menos 1 mês de carência.";
     if(p.tacManual && isNaN(p.tacManualValor)) return "Informe a TAC Manual - Pode ser zero.";
     return null;
 }
@@ -992,7 +1126,7 @@ function atualizarStatusAmortizacoes(){
         el.className = "amort-status";
     });
     if(erro) return;
-    const datas = [cloneDate(p.d0)].concat(gerarDatasPrefixado(p.d0, p.base, p.prazo));
+    const datas = [cloneDate(p.d0)].concat(gerarDatasPrefixado(p.d0, p.base, p.prazo, p.sistema));
     const { situacao, porParcela } = prepararAmortizacoes({ datas, E5: p.car }, p.amortizacoes);
     p.amortizacoes.forEach(a => {
         const s = situacao[a.slot];
@@ -1084,7 +1218,7 @@ function renderizarOperacaoOriginal(){
         { label:"Taxa Mensal", value:`${(p.taxa * 100).toFixed(2)}% a.m.` },
         { label:"Contratação", value:p.d0.toLocaleDateString('pt-BR') },
         { label:"Data Base", value:p.base },
-        { label:"Sistema", value:"SAC" },
+        { label:"Sistema", value:p.sistema.toUpperCase() },
         { label:"Carência", value:orig.E5 },
         { label:"Prazo Total", value:orig.E6 },
         { label:"TAC", value:formatReal(orig.tac) },
@@ -1161,7 +1295,7 @@ function calcular(){
         { key:"taxaMensal", label:"Taxa Mensal¹", value:`${(p.taxa * 100).toFixed(2)}% a.m.` },
         { key:"contratacao", label:"Contratação", value:formatDateBR(dataLiberacaoInput.value) },
         { key:"dataBase", label:"Data Base", value:dataBaseInput.value },
-        { key:"sistema", label:"Sistema", value:"SAC" },
+        { key:"sistema", label:"Sistema", value:p.sistema.toUpperCase() },
         { key:"carencia", label:"Carência", value:orig.E5 },
         { key:"prazoTotal", label:"Prazo Total", value:orig.E6 },
         { key:"tipoAmortizacao", label:"Tipo de Amortização", value:p.tipoAmortizacao === "crescente" ? "Crescente" : "Proporcional" },
@@ -1179,9 +1313,6 @@ function calcular(){
     ]);
 
     const textoLegendaParcela = p.usarSeguro ? "³Inclui valor da parcela do prestamista;<br>" : "";
-    const textoTipo = p.tipoAmortizacao === "crescente"
-        ? "Amortização do tipo crescente: o valor amortizado abate o capital das próximas parcelas, em ordem de vencimento."
-        : "Amortização do tipo proporcional: o valor amortizado é dividido igualmente entre as parcelas restantes, reduzindo o capital de cada uma.";
 
     rodapeSimulacao.innerHTML = `
     ¹Juros calculados pela quantidade de dias corridos entre as datas-base;<br>
@@ -1189,10 +1320,6 @@ function calcular(){
     ${textoLegendaParcela}
     ⁴Inclui as parcelas, as amortizações e as despesas da contratação;<br>
     ⁵Diferença entre o total das parcelas da operação sem amortização e com as amortizações informadas.
-
-    <h3>AMORTIZAÇÃO</h3>
-    <p>${textoTipo}</p>
-    <p>Nas linhas de amortização, os juros apurados até a data integram o saldo devedor e são cobrados na parcela seguinte.</p>
 
     <h3>OBSERVAÇÕES</h3>
     <p>A presente simulação não possui caráter de proposta financeira vinculante ou de estruturação de negócio.</p>
@@ -1226,6 +1353,8 @@ const carenciaInput = document.getElementById("carencia");
 const dataBaseInput = document.getElementById("dataBase");
 const dataLiberacaoInput = document.getElementById("dataLiberacao");
 const preInput = document.getElementById("pre");
+const sistemaSelect = document.getElementById("sistema");
+const iofFinanciadoContainer = document.getElementById("iofFinanciadoContainer");
 const iofDiarioInput = document.getElementById("iofDiario");
 const iofAdicionalInput = document.getElementById("iofAdicional");
 const iofFinanciadoSelect = document.getElementById("iofFinanciado");
@@ -1350,7 +1479,13 @@ function atualizarSeguroOptions(){
 }
 
 function atualizarJurosHeader(){
-    jurosHeader.textContent = iofFinanciadoSelect.value === "true" ? "Juros+IOF" : "Juros";
+    jurosHeader.textContent = (sistemaSelect.value === "sac" && iofFinanciadoSelect.value === "true") ? "Juros+IOF" : "Juros";
+}
+
+function atualizarIofFinanciado(){
+    // IOF financiado: apenas SAC
+    iofFinanciadoContainer.style.display = sistemaSelect.value === "sac" ? "" : "none";
+    atualizarJurosHeader();
 }
 
 function atualizarTacManual(){
@@ -1383,6 +1518,7 @@ dataBaseInput.addEventListener("input", () => { baseFoiAlteradaPeloUsuario = tru
 seguroSelect.addEventListener("change", () => { atualizarSeguroOptions(); resetarResultados(); });
 iofFinanciadoSelect.addEventListener("change", () => { atualizarJurosHeader(); resetarResultados(); });
 tipoTacSelect.addEventListener("change", atualizarTacManual);
+sistemaSelect.addEventListener("change", () => { atualizarIofFinanciado(); resetarResultados(); });
 atualizarCabecalhoImpressao();
 bindResultsResetListeners();
 bindFiltroCamposResumo();
@@ -1391,6 +1527,7 @@ if(btnPrint) btnPrint.disabled = true;
 atualizarSeguroOptions();
 atualizarJurosHeader();
 atualizarTacManual();
+atualizarIofFinanciado();
 
 </script>
 
