@@ -783,7 +783,6 @@ function calcular(){
     }
 
     const iofFinanciadoShare = (iofFinanciado && sistema === "sac") ? (totalIofDiario + iofAdicionalTotal) / amortFinanceiro : 0;
-    const usarPrincipalEstendido = (sistema === "sac" && base < diasNoMes(d0.getFullYear(), d0.getMonth()));
 
     // PRICE: pre-calcular juros de amortização seguindo o modelo da planilha
     let priceJurosReverso = [];
@@ -820,8 +819,11 @@ function calcular(){
         let jurosPeriodo, capitalParcela, parcelaTotal;
 
         if(sistema === "sac"){
-            if(i === 0 && usarPrincipalEstendido){
-                const condDataBaseMesSeguinte = base < diasNoMes(d0.getFullYear(), d0.getMonth());
+            if(i === 0){
+                // 1ª parcela (planilha J10+J11 / K10+K11): juros da contratação até a data base
+                // (no mês seguinte se a data base for menor que o dia da contratação; senão, no próprio mês),
+                // capitalizados até o vencimento da 1ª parcela
+                const condDataBaseMesSeguinte = base < d0.getDate();
                 let dtSplit;
                 if(condDataBaseMesSeguinte){
                     dtSplit = new Date(d0.getFullYear(), d0.getMonth() + 1, base);
