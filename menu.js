@@ -34,7 +34,7 @@ const MENU_SIMULADORES = [
     { titulo: "Amortizações", itens: [
         { nome: "PEAC FGI", arquivo: "SimuladorPEACAmort.html" },
         { nome: "PRONAMPE / PROCRED", arquivo: "SimuladorPRONAMPEAmort.html" },
-        { nome: "Prefixado (SAC / PRICE)", arquivo: null, tag: "EM BREVE" },
+        { nome: "Prefixado (SAC)", arquivo: "SimuladorPREFIXADOAmort.html" },
         { nome: "SAC (CDI+ST / %CDI)", arquivo: "SimuladorSACAmort.html" }
     ]}
 ];
