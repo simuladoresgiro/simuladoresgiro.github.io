@@ -34,7 +34,7 @@ const MENU_SIMULADORES = [
     { titulo: "Amortizações", itens: [
         { nome: "PEAC FGI", arquivo: "SimuladorPEACAmort.html" },
         { nome: "PRONAMPE / PROCRED", arquivo: "SimuladorPRONAMPEAmort.html" },
-        { nome: "Prefixado (SAC)", arquivo: "SimuladorPREFIXADOAmort.html" },
+        { nome: "Prefixado (SAC / PRICE)", arquivo: "SimuladorPREFIXADOAmort.html" },
         { nome: "SAC (CDI+ST / %CDI)", arquivo: "SimuladorSACAmort.html" }
     ]}
 ];
@@ -97,7 +97,7 @@ const MENU_RODAPE = "Desenvolvido por F3421879 - Guerreiro · v2.0";
         }
 
         const atual = (document.body.dataset.menuAtivo || location.pathname.split("/").pop() || "index.html").toLowerCase();
-        const emTesteV2 = /_v2\.html$/i.test(location.pathname);
+        const emTesteV2 = /_v2\.html$/i.test(location.pathname) && document.body.dataset.menuLinksV2 !== "nao";
 
         const grupos = MENU_SIMULADORES.map(grupo => {
             const titulo = grupo.titulo ? `<div class="menu-titulo">${grupo.titulo}</div>` : "";
