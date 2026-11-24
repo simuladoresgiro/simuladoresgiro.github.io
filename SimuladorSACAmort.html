@@ -1342,9 +1342,6 @@ function calcular(){
     ]);
 
     const textoLegendaParcela = p.usarSeguro ? "³Inclui valor da parcela do prestamista;<br>" : "";
-    const textoTipo = p.tipoAmortizacao === "crescente"
-        ? "Amortização do tipo crescente: o valor amortizado abate o capital das próximas parcelas, em ordem de vencimento."
-        : "Amortização do tipo proporcional: o valor amortizado é dividido igualmente entre as parcelas restantes, reduzindo o capital de cada uma.";
 
     rodapeSimulacao.innerHTML = `
     ¹Valor depende da quantidade de dias úteis entre as datas-base e CDI (${cdiInput.value}% a.a. atualmente);<br>
@@ -1352,10 +1349,6 @@ function calcular(){
     ${textoLegendaParcela}
     ⁴Inclui as parcelas, as amortizações e as despesas da contratação;<br>
     ⁵Diferença entre o total das parcelas da operação sem amortização e com as amortizações informadas.
-
-    <h3>AMORTIZAÇÃO</h3>
-    <p>${textoTipo}</p>
-    <p>Nas linhas de amortização, os juros apurados até a data integram o saldo devedor e são cobrados na parcela seguinte.</p>
 
     <h3>OBSERVAÇÕES</h3>
     <p>A presente simulação não possui caráter de proposta financeira vinculante ou de estruturação de negócio.</p>
