@@ -806,7 +806,8 @@ function calcularOperacaoOriginal(p){
     const tac = p.tacManual ? p.tacManualValor : tacAutomatico;
 
     // Comissão Flat
-    const comissaoFlat = p.flatUnidade === "real" ? p.flatValor : valor * (p.flatValor / 100);
+    // (flat em percentual: recalculada abaixo sobre valor + IOF quando o IOF é financiado)
+    let comissaoFlat = p.flatUnidade === "real" ? p.flatValor : valor * (p.flatValor / 100);
 
     // IOF
     const iofDiarioRate = p.iofDiario;
@@ -843,6 +844,7 @@ function calcularOperacaoOriginal(p){
         iofAdicionalTotal = Math.round((totalIofFinanciado - totalIofDiario) * 100) / 100;
         if(iofAdicionalTotal < 0) iofAdicionalTotal = 0;
         totalIOF = iofAdicionalTotal;
+        if(p.flatUnidade !== "real") comissaoFlat = (valor + totalIofFinanciado) * (p.flatValor / 100);
         const valorIofPorAmortizacao = totalIofFinanciado / amortFinanceiro;
         iofFinanciadoPorParcela = datasParcelas.map((data, indice) => indice + 1 > car ? valorIofPorAmortizacao : 0);
         saldoDevedor = valor + totalIofFinanciado;
