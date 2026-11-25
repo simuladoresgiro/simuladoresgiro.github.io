@@ -17,6 +17,12 @@ jobs:
   atualizar:
     runs-on: ubuntu-latest
     steps:
+      - name: Registrar o agendamento
+        shell: bash
+        run: |
+          echo "Disparo: ${{ github.event_name }} | agendamento (UTC): ${{ github.event.schedule || 'manual' }}"
+          echo "Início real: $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (Brasília)"
+
       - name: Baixar o repositório
         uses: actions/checkout@v5
 
