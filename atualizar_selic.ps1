@@ -59,14 +59,20 @@ function Resumir([string]$texto){
 
 # Baixa o conteúdo (texto) de uma URL, com até 3 tentativas
 function Baixar([string]$url){
+    # O site do BCB às vezes devolve uma página HTML (instabilidade/bloqueio temporário) em vez do JSON:
+    # isso também conta como falha e gera nova tentativa, com espera crescente.
+    $esperas = @(20, 60, 120)
     $erro = ""
-    for($t = 1; $t -le 3; $t++){
+    for($t = 0; $t -le $esperas.Count; $t++){
         try {
-            $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 60 -Headers @{ Accept = "application/json" }
-            return [string]$r.Content
+            $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 60 -UserAgent "Mozilla/5.0 (compatible; AtualizadorSelic/1.0)" `
+                -Headers @{ Accept = "application/json"; "Accept-Language" = "pt-BR,pt;q=0.9" }
+            $conteudo = [string]$r.Content
+            if($conteudo.TrimStart().StartsWith("<")){ throw "resposta não é JSON: $(Resumir $conteudo)" }
+            return $conteudo
         } catch {
             $erro = $_.Exception.Message
-            if($t -lt 3){ Start-Sleep -Seconds 15 }
+            if($t -lt $esperas.Count){ Start-Sleep -Seconds $esperas[$t] }
         }
     }
     throw $erro
@@ -122,8 +128,10 @@ function Obter-Periodos(){
         try { return @{ Periodos = (Ler-Periodos (Baixar $f.Url)); Fonte = $f.Nome } }
         catch { $falhas += "$($f.Nome): $($_.Exception.Message)" }
     }
+    $script:BcbIndisponivel = $true
     throw ("Não foi possível obter a Meta Selic. " + ($falhas -join " | "))
 }
+$BcbIndisponivel = $false
 
 try {
     # ---- 1. Meta Selic: períodos de vigência
@@ -190,6 +198,12 @@ try {
         Write-Output "(modo teste: nenhum arquivo foi gravado)"
     }
 } catch {
+    if($BcbIndisponivel -and $NoGitHub){
+        # BCB fora do ar ou bloqueando o servidor do GitHub: nada é alterado e a próxima execução tenta de novo.
+        Registrar "AVISO: Banco Central indisponível nesta execução; arquivos não alterados. A verificação será repetida na próxima execução. Detalhe: $($_.Exception.Message)"
+        Write-Output "::warning title=Banco Central indisponível::Não foi possível consultar a Meta Selic nesta execução. Os arquivos não foram alterados."
+        exit 0
+    }
     Registrar "ERRO: $($_.Exception.Message)"
     exit 1
 }
