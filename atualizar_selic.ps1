@@ -68,7 +68,11 @@ function Baixar([string]$url){
             $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 60 -UserAgent "Mozilla/5.0 (compatible; AtualizadorSelic/1.0)" `
                 -Headers @{ Accept = "application/json"; "Accept-Language" = "pt-BR,pt;q=0.9" }
             $conteudo = [string]$r.Content
-            if($conteudo.TrimStart().StartsWith("<")){ throw "resposta não é JSON: $(Resumir $conteudo)" }
+            if($conteudo.TrimStart().StartsWith("<")){
+                $titulo = [regex]::Match($conteudo, "(?is)<title[^>]*>(.*?)</title>").Groups[1].Value.Trim()
+                $titulo = if($titulo){ "título da página: '" + ($titulo -replace "\s+", " ") + "'" } else { Resumir $conteudo }
+                throw "resposta em HTML em vez de JSON (HTTP $($r.StatusCode); $titulo)"
+            }
             return $conteudo
         } catch {
             $erro = $_.Exception.Message
