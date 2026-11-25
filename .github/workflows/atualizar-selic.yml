@@ -1,10 +1,13 @@
-# Verifica diariamente a Meta Selic (Banco Central, SGS série 432) e, se houver
+# Verifica diariamente a Meta Selic (Banco Central: histórico das taxas de juros; alternativa SGS série 432) e, se houver
 # alteração, atualiza "taxasReferencia" em CDI.json e TMS.json e publica no site.
 name: Atualizar Selic
 
 on:
   schedule:
-    - cron: "0 11 * * *"     # todo dia às 08:00 (horário de Brasília = 11:00 UTC)
+    # Horários em UTC (Brasília = UTC-3). O GitHub pode atrasar execuções agendadas em horários
+    # "redondos" (minuto 00), quando há muita demanda; por isso o minuto 17.
+    - cron: "17 11 * * *"    # todo dia por volta das 08:17
+    - cron: "17 17 * * *"    # repetição por volta das 14:17, caso a primeira atrase ou o Banco Central esteja indisponível
   workflow_dispatch:          # permite rodar manualmente pela aba Actions
 
 permissions:
