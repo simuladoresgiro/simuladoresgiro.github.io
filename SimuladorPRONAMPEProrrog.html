@@ -833,13 +833,15 @@ function calcularProrrogacao(orig, p){
         if(primeira){
             // Saldo de juros sem os juros da prorrogação (G14), que são pagos nesta parcela quando cobrados
             const hSemG14 = ant.H - G14;
-            G = (L6 === 1 || carencia) ? ant.K * f : ant.K * f + (ant.J > 0 ? hSemG14 * F / ant.J : 0);
+            // Após a carência, os juros incluem a parte proporcional do saldo devedor de juros (H), em qualquer
+            // caso: na planilha, com juros na carência original (L6 = 1) esse saldo nunca era cobrado.
+            G = carencia ? ant.K * f : ant.K * f + (ant.J > 0 ? hSemG14 * F / ant.J : 0);
             // Na carência com cobrança de juros (J6 = 1), G14 é pago nesta parcela e sai do saldo
             // (a planilha mantém H14 inteiro nesse caso; hoje J6 = 2, então não há diferença)
             H = carencia ? (J6 === 2 ? ant.H + G : hSemG14) : hSemG14 - (ant.J > 0 ? hSemG14 * F / ant.J : 0);
             X = (J6 === 1 || !carencia) ? G + G14 + F : 0;
         } else {
-            G = (L6 === 1 || carencia) ? ant.K * f : ant.K * f + (ant.J > 0 ? ant.H * F / ant.J : 0);
+            G = carencia ? ant.K * f : ant.K * f + (ant.J > 0 ? ant.H * F / ant.J : 0);
             H = carencia ? ant.H + (J6 === 2 ? G : 0) : ant.H - (ant.J > 0 ? ant.H * F / ant.J : 0);
             X = (J6 === 1 || !carencia) ? G + F : 0;
         }
