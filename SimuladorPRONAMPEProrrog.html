@@ -270,6 +270,9 @@ button.filter-action:hover { background:var(--azul-50); }
 .status-prorrog.erro { background:#fdecee; color:#b2202f; }
 .status-prorrog.aviso { background:#fff6e0; color:#8a5a00; }
 .prorrog-card .switch { height:auto; margin-top:12px; font-size:0.84rem; }
+.prorrog-card .field > label.switch-situacao { height:40px; margin-top:0; font-weight:600; }
+.prorrog-card .campo-inadimplente[hidden] { display:none; }
+.switch-situacao input:checked ~ #situacaoTexto { color:#b2202f; }
 .prorrog-card .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
 .acoes .switch { height:40px; font-weight:600; color:var(--azul-800); }
 .tabela-parcelas tbody tr.historico-row td { color:#6b7a90; background:#f3f5f8; }
@@ -398,8 +401,8 @@ button.filter-action:hover { background:var(--azul-50); }
     <div class="entrada"><input id="dataProrrog" type="date"></div>
 </div>
             <div class="field">
-    <label for="saldoInformado">Saldo devedor**</label>
-    <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="saldoInformado" type="text" inputmode="decimal" data-mascara="moeda" placeholder="Opcional" value=""></div>
+    <label for="inadimplente">Situação</label>
+    <label class="switch switch-situacao" for="inadimplente"><input type="checkbox" id="inadimplente" role="switch"><span class="trilho"></span><span id="situacaoTexto">Adimplente</span></label>
 </div>
             <div class="field">
     <label for="novasParcelas">Novas parcelas</label>
@@ -409,11 +412,20 @@ button.filter-action:hover { background:var(--azul-50); }
     <label for="novaCarencia">Nova carência</label>
     <div class="entrada com-sufixo"><input id="novaCarencia" type="number" min="0" value="2"><span class="sufixo">meses</span></div>
 </div>
-            
+            <div class="field campo-inadimplente" hidden>
+    <label for="saldoInformado">Saldo devedor**</label>
+    <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="saldoInformado" type="text" inputmode="decimal" data-mascara="moeda" placeholder="0,00" value=""></div>
+</div>
+            <div class="field campo-inadimplente" hidden>
+    <label for="parcelasAtraso">Parcelas em atraso***</label>
+    <div class="entrada"><input id="parcelasAtraso" type="number" min="0" value="0"></div>
+</div>
+
         </div>
         <div id="statusProrrog" class="status-prorrog">Aguardando dados...</div>
         <label class="switch" for="exibirHistorico"><input type="checkbox" id="exibirHistorico" class="no-reset" role="switch"><span class="trilho"></span><span>Exibir parcelas anteriores na tabela</span></label>
-        <p class="nota-campos">**Utilizar apenas se houver inadimplência. Saldo devedor total = Saldo devedor + Inad (desconsiderar Normalidade). Se em branco, utiliza o saldo calculado de normalidade.</p>
+        <p class="nota-campos campo-inadimplente" hidden>**Saldo devedor total = Saldo devedor + Inad (desconsiderar Normalidade). Se em branco, utiliza o saldo calculado de normalidade.</p>
+        <p class="nota-campos campo-inadimplente" hidden>***O saldo informado cobre primeiro o capital devido (saldo de capital antes das parcelas em atraso) e o restante é considerado juros e multa.</p>
         <p class="nota-campos">Conferir se a quantidade de parcelas a mais corresponde ao permitido no COP (últimas parcelas iguais).</p>
     </div>
 </section>
@@ -806,14 +818,18 @@ function calcularProrrogacao(orig, p){
     const l13 = { tipo:"ultima", n:m, data:o.data, F:o.F, G:o.G, H:o.H, I:o.I, J:o.J, K:o.K, L:somaLHist, M:somaMHist };
 
     // Linha da prorrogação (B14 = T4)
-    // Saldo devedor informado (T5): a diferença em relação ao capital fica no saldo devedor de juros (H14);
-    // o capital (J14) permanece o da última parcela paga.
+    // Saldo devedor informado (T5): cobre primeiro o capital devido e o restante é juros e multa (H14).
+    // Capital devido = saldo de capital do cronograma antes das parcelas em atraso (sem atraso: o da última parcela, J13).
+    // Sem parcelas em atraso, equivale à planilha: H14 = G14 + T5 - J13.
     const G14 = l13.K * fatorJurosTMS(l13.data, p.dataProrrog, p);
     let H14 = G14 + l13.H;
+    let J14 = l13.J;
     if(p.saldoInformado > 0){
-        H14 += p.saldoInformado - l13.J + (L6 === 2 ? G14 - l13.H - G14 : 0);
+        if(p.parcelasAtraso > m) throw new Error(`Parcelas em atraso: no máximo ${m} (parcelas vencidas até a data da prorrogação).`);
+        const capitalDevido = orig.linhas[m - p.parcelasAtraso].J;
+        J14 = Math.min(p.saldoInformado, capitalDevido);
+        H14 = G14 + (p.saldoInformado - J14);
     }
-    const J14 = l13.J;
     const K14 = (H14 + J14 <= 0) ? 0 : J14 + H14;
     let somaL = somaLHist;
     const L14 = limitarDiasIOF(somaL, difDias(l13.data, p.dataProrrog));
@@ -891,7 +907,9 @@ function lerParametros(){
         iofDiario: parseFloat(iofDiarioInput.value || 0.0082) / 100,
         iofAdicional: parseFloat(iofAdicionalInput.value || 0.38) / 100,
         dataProrrog: parseDateLocal(dataProrrogInput.value),
-        saldoInformado: parseValor(saldoInformadoInput.value) || 0,
+        // Saldo devedor e parcelas em atraso: considerados apenas na situação Inadimplente
+        saldoInformado: inadimplenteInput.checked ? (parseValor(saldoInformadoInput.value) || 0) : 0,
+        parcelasAtraso: inadimplenteInput.checked ? (parseInt(parcelasAtrasoInput.value, 10) || 0) : 0,
         novasParcelas: parseInt(novasParcelasInput.value, 10),
         novaCarencia: parseInt(novaCarenciaInput.value, 10),
         dataMaximaIndice: obterDataMaximaIndice()
@@ -908,6 +926,7 @@ function validarParametros(p){
         return "Informe a quantidade de novas parcelas e de nova carência (podem ser zero).";
     }
     if(p.dataProrrog <= p.d0) return "A data da prorrogação deve ser posterior à data de liberação.";
+    if(p.parcelasAtraso < 0) return "Parcelas em atraso não pode ser negativo.";
     return null;
 }
 
@@ -1094,6 +1113,7 @@ function calcular(){
     ${legendaParcela}
     ${TIPO_PRORROGACAO === 1 ? "Nova carência apenas do capital (juros cobrados nas parcelas da carência);<br>" : ""}
     ⁴Inclui as parcelas já pagas e as despesas da contratação original, além da despesa da prorrogação.
+    ${p.saldoInformado > 0 ? `<p style="margin-top:8px">Saldo devedor informado de ${formatReal(p.saldoInformado)}: capital ${formatReal(pr.l14.J)} e juros/multa ${formatReal(p.saldoInformado - pr.l14.J)}${p.parcelasAtraso > 0 ? ` (${p.parcelasAtraso} parcela${p.parcelasAtraso > 1 ? "s" : ""} em atraso)` : ""}.</p>` : ""}
 
     <h3>OBSERVAÇÕES</h3>
     <p>A presente simulação não possui caráter de proposta financeira vinculante ou de estruturação de negócio.</p>
@@ -1136,6 +1156,16 @@ const sociosInput = document.getElementById("socios");
 const sociosContainer = document.getElementById("sociosContainer");
 const dataProrrogInput = document.getElementById("dataProrrog");
 const saldoInformadoInput = document.getElementById("saldoInformado");
+const parcelasAtrasoInput = document.getElementById("parcelasAtraso");
+const inadimplenteInput = document.getElementById("inadimplente");
+
+// Situação Adimplente/Inadimplente: mostra o saldo devedor e as parcelas em atraso só quando inadimplente
+function atualizarSituacao(){
+    const inad = inadimplenteInput.checked;
+    document.getElementById("situacaoTexto").textContent = inad ? "Inadimplente" : "Adimplente";
+    document.querySelectorAll(".campo-inadimplente").forEach(el => { el.hidden = !inad; });
+}
+inadimplenteInput.addEventListener("change", atualizarSituacao);
 const novasParcelasInput = document.getElementById("novasParcelas");
 const novaCarenciaInput = document.getElementById("novaCarencia");
 const exibirHistoricoInput = document.getElementById("exibirHistorico");
@@ -1274,6 +1304,7 @@ bindFiltroCamposResumo();
 window.onbeforeprint = atualizarCabecalhoImpressao;
 if(btnPrint) btnPrint.disabled = true;
 atualizarSocios();
+atualizarSituacao();
 
 </script>
 
