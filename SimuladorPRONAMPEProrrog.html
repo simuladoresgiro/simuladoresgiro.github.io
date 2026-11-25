@@ -806,12 +806,14 @@ function calcularProrrogacao(orig, p){
     const l13 = { tipo:"ultima", n:m, data:o.data, F:o.F, G:o.G, H:o.H, I:o.I, J:o.J, K:o.K, L:somaLHist, M:somaMHist };
 
     // Linha da prorrogação (B14 = T4)
+    // Saldo devedor informado (T5): a diferença em relação ao capital fica no saldo devedor de juros (H14);
+    // o capital (J14) permanece o da última parcela paga.
     const G14 = l13.K * fatorJurosTMS(l13.data, p.dataProrrog, p);
-    const H14 = G14 + l13.H;
-    let J14 = l13.J;
+    let H14 = G14 + l13.H;
     if(p.saldoInformado > 0){
-        J14 = l13.J + (p.saldoInformado - l13.J - H14 + (L6 === 2 ? G14 : 0));
+        H14 += p.saldoInformado - l13.J + (L6 === 2 ? G14 - l13.H - G14 : 0);
     }
+    const J14 = l13.J;
     const K14 = (H14 + J14 <= 0) ? 0 : J14 + H14;
     let somaL = somaLHist;
     const L14 = limitarDiasIOF(somaL, difDias(l13.data, p.dataProrrog));
@@ -829,8 +831,12 @@ function calcularProrrogacao(orig, p){
         const f = fatorJurosTMS(ant.data, data, p);
         let G, H, X;
         if(primeira){
-            G = (L6 === 1 || carencia) ? (ant.K + G14) * f : ant.K * f + (l13.J > 0 ? l13.H * F / l13.J : 0);
-            H = carencia ? l13.H + (J6 === 2 ? G + G14 : 0) : l13.H - (ant.J > 0 ? l13.H * F / ant.J : 0);
+            // Saldo de juros sem os juros da prorrogação (G14), que são pagos nesta parcela quando cobrados
+            const hSemG14 = ant.H - G14;
+            G = (L6 === 1 || carencia) ? ant.K * f : ant.K * f + (ant.J > 0 ? hSemG14 * F / ant.J : 0);
+            // Na carência com cobrança de juros (J6 = 1), G14 é pago nesta parcela e sai do saldo
+            // (a planilha mantém H14 inteiro nesse caso; hoje J6 = 2, então não há diferença)
+            H = carencia ? (J6 === 2 ? ant.H + G : hSemG14) : hSemG14 - (ant.J > 0 ? hSemG14 * F / ant.J : 0);
             X = (J6 === 1 || !carencia) ? G + G14 + F : 0;
         } else {
             G = (L6 === 1 || carencia) ? ant.K * f : ant.K * f + (ant.J > 0 ? ant.H * F / ant.J : 0);
@@ -851,7 +857,7 @@ function calcularProrrogacao(orig, p){
     const somaM = l13.M + l14.M + novas.reduce((s, l) => s + l.M, 0);
     const iofComplementar = Math.max(0, somaM - orig.iofDiario);       // K7
     const despesaTotal = iofComplementar + 0;                          // K9 = K7 + K8 (K8 = 0)
-    const saldoDevedor = K14 + (L6 === 1 ? G14 : 0);                   // K10
+    const saldoDevedor = K14;                                          // K10
     l14.I = despesaTotal;
 
     const totalPagar = novas.reduce((s, l) => s + l.I, 0) + orig.despesaTotal + despesaTotal + hist.reduce((s, l) => s + l.I, 0);
