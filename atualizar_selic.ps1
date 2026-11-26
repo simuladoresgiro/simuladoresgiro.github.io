@@ -31,7 +31,10 @@ $Utf8SemBom = New-Object System.Text.UTF8Encoding($false)
 $NoGitHub = $env:GITHUB_ACTIONS -eq "true"
 
 function Registrar([string]$msg){
-    $linha = "{0}  {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $msg
+    # No GitHub o servidor usa UTC: o registro sai no horário de Brasília
+    $agora = Get-Date
+    if($NoGitHub){ try { $agora = [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, "America/Sao_Paulo") } catch {} }
+    $linha = "{0}  {1}" -f $agora.ToString("yyyy-MM-dd HH:mm:ss"), $msg
     Write-Output $linha
     if(-not $Testar -and -not $NoGitHub){ Add-Content -Path $Log -Value $linha -Encoding UTF8 }
     if($NoGitHub -and $env:GITHUB_STEP_SUMMARY){ Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $msg" -Encoding UTF8 }
