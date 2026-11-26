@@ -436,15 +436,10 @@ button.filter-action:hover { background:var(--azul-50); }
     <label for="saldoInformado">Saldo devedor**</label>
     <div class="entrada com-prefixo"><span class="prefixo">R$</span><input id="saldoInformado" type="text" inputmode="decimal" data-mascara="moeda" placeholder="0,00" value=""></div>
 </div>
-            <div class="field campo-inadimplente" hidden>
-    <label for="parcelasAtraso">Parcelas em atraso***</label>
-    <div class="entrada"><input id="parcelasAtraso" type="number" min="0" value="0"></div>
-</div>
         </div>
         <div id="statusProrrog" class="status-prorrog">Aguardando dados...</div>
         <label class="switch" for="exibirHistorico"><input type="checkbox" id="exibirHistorico" class="no-reset" role="switch"><span class="trilho"></span><span>Exibir parcelas anteriores na tabela</span></label>
-        <p class="nota-campos campo-inadimplente" hidden>**Saldo devedor total = Saldo devedor + Inad (desconsiderar Normalidade). Se em branco, utiliza o saldo calculado de normalidade.</p>
-        <p class="nota-campos campo-inadimplente" hidden>***O saldo informado cobre primeiro o capital devido (saldo de capital antes das parcelas em atraso) e o restante é considerado juros e multa.</p>
+        <p class="nota-campos campo-inadimplente" hidden>**Saldo devedor total = Saldo devedor + Inad (desconsiderar Normalidade). Capital, juros e multas em atraso são capitalizados e redistribuídos no novo cronograma; os juros de normalidade desde a última parcela são cobrados na 1ª nova parcela. Se em branco, utiliza o saldo calculado de normalidade.</p>
         <p class="nota-campos">Conferir se a quantidade de parcelas a mais corresponde ao permitido no COP (últimas parcelas iguais).</p>
     </div>
 </section>
@@ -872,16 +867,12 @@ function calcularProrrogacao(orig, p){
 
     // Linha da prorrogação (B14 = T4): juros acumulados desde a última parcela paga
     const G14 = jurosPeriodo(l13.K, l13.data, p.dataProrrog, p);
-    let H14 = G14;
+    // Inadimplência: capital, juros e multas em atraso são capitalizados e redistribuídos no novo cronograma,
+    // ou seja, o saldo informado (T5, sem a normalidade) vai todo para o capital (J14 = T5, como na planilha).
+    // Os juros de normalidade desde a última parcela (G14) ficam separados e são cobrados na 1ª nova parcela.
+    const H14 = G14;
     let J14 = l13.J;
-    if(p.saldoInformado > 0){
-        // Inadimplência: o saldo informado (T5, sem os juros de normalidade G14) cobre primeiro o capital devido
-        // (saldo de capital do cronograma antes das parcelas em atraso); o restante é juros e multa (H14).
-        if(p.parcelasAtraso > m) throw new Error(`Parcelas em atraso: no máximo ${m} (parcelas vencidas até a data da prorrogação).`);
-        const capitalDevido = orig.linhas[m - p.parcelasAtraso].I;
-        J14 = Math.min(p.saldoInformado, capitalDevido);
-        H14 = G14 + (p.saldoInformado - J14);
-    }
+    if(p.saldoInformado > 0) J14 = p.saldoInformado;
     const K14 = (H14 + J14 <= 0) ? 0 : J14 + H14;
     let somaL = somaLHist;
     const L14 = limitarDiasIOF(somaL, difDias(l13.data, p.dataProrrog));
@@ -896,8 +887,8 @@ function calcularProrrogacao(orig, p){
         const primeira = n === m + 1;
         const carencia = n <= E5;
         const F = carencia ? 0 : ant.J / (F6 - n + 1);
-        // Saldo de juros e multa da inadimplência (sem os juros de normalidade G14, pagos na 1ª parcela):
-        // na carência os juros sobre ele são pagos; depois, é amortizado junto com o capital (mesma fração F/J).
+        // Saldo de juros além dos juros de normalidade G14 (pagos na 1ª parcela). Hoje é sempre zero, pois a
+        // inadimplência é capitalizada no capital; se houver, é amortizado junto com o capital (mesma fração F/J).
         const hBase = primeira ? ant.H - G14 : ant.H;
         const amortH = (!carencia && ant.J > 0) ? hBase * F / ant.J : 0;
         let G, X;
@@ -966,9 +957,8 @@ function lerParametros(){
         tacManual: tipoTacSelect.value === "manual",
         tacManualValor: parseFloat(tacManualInput.value),
         dataProrrog: parseDateLocal(dataProrrogInput.value),
-        // Saldo devedor e parcelas em atraso: considerados apenas na situação Inadimplente
+        // Saldo devedor informado: considerado apenas na situação Inadimplente
         saldoInformado: inadimplenteInput.checked ? (parseValor(saldoInformadoInput.value) || 0) : 0,
-        parcelasAtraso: inadimplenteInput.checked ? (parseInt(parcelasAtrasoInput.value, 10) || 0) : 0,
         novasParcelas: parseInt(novasParcelasInput.value, 10),
         novaCarencia: parseInt(novaCarenciaInput.value, 10),
         descontoEcgProrrog: parseFloat(descontoEcgProrrogInput.value || 40) / 100,
@@ -987,7 +977,6 @@ function validarParametros(p){
         return "Informe a quantidade de novas parcelas e de nova carência (podem ser zero).";
     }
     if(p.dataProrrog <= p.d0) return "A data da prorrogação deve ser posterior à data de liberação.";
-    if(p.parcelasAtraso < 0) return "Parcelas em atraso não pode ser negativo.";
     return null;
 }
 
@@ -1192,7 +1181,7 @@ function calcular(){
     ³Cobrado na data da prorrogação. Inclui valores de IOF complementar e ECG (${pr.prazoECG} meses adicionais);<br>
     ${legendaParcela}
     ⁵Inclui as parcelas já pagas e as despesas da contratação original e da prorrogação.
-    ${p.saldoInformado > 0 ? `<p style="margin-top:8px">Saldo devedor informado de ${formatReal(p.saldoInformado)}: capital ${formatReal(pr.l14.J)} e juros/multa ${formatReal(p.saldoInformado - pr.l14.J)}${p.parcelasAtraso > 0 ? ` (${p.parcelasAtraso} parcela${p.parcelasAtraso > 1 ? "s" : ""} em atraso)` : ""}.</p>` : ""}
+    ${p.saldoInformado > 0 ? `<p style="margin-top:8px">Inadimplência: saldo devedor informado de ${formatReal(p.saldoInformado)}, com capital, juros e multas em atraso capitalizados e redistribuídos no novo cronograma (capital prorrogado ${formatReal(pr.l14.J)}). Os juros de normalidade desde a última parcela (${formatReal(pr.l14.G)}) são cobrados na 1ª nova parcela.</p>` : ""}
 
     <h3>OBSERVAÇÕES</h3>
     <p>A presente simulação não possui caráter de proposta financeira vinculante ou de estruturação de negócio.</p>
@@ -1243,7 +1232,6 @@ const tacManualInput = document.getElementById("tacManual");
 const tacManualContainer = document.getElementById("tacManualContainer");
 const dataProrrogInput = document.getElementById("dataProrrog");
 const saldoInformadoInput = document.getElementById("saldoInformado");
-const parcelasAtrasoInput = document.getElementById("parcelasAtraso");
 const inadimplenteInput = document.getElementById("inadimplente");
 
 // Situação Adimplente/Inadimplente: mostra o saldo devedor e as parcelas em atraso só quando inadimplente
