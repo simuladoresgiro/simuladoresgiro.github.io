@@ -6,7 +6,7 @@ on:
   schedule:
     # Horários em UTC (Brasília = UTC-3). O GitHub pode atrasar execuções agendadas em horários
     # "redondos" (minuto 00), quando há muita demanda; por isso o minuto 17.
-    - cron: "17 04 * * *"    # todo dia por volta das 01:17
+    - cron: "17 03 * * *"    # todo dia por volta das 00:17
     - cron: "17 09 * * *"    # repetição por volta das 06:17, caso a primeira atrase ou o Banco Central esteja indisponível
   workflow_dispatch:          # permite rodar manualmente pela aba Actions
 
